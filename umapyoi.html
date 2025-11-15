@@ -217,8 +217,8 @@ const LANG = {
     pointsTitle: "Points",
     pointsLabel: "Total points:",
     pointsHint: "Points may go negative and never reset automatically.",
-    createMatch: "Create Match",
-    matchName: "Match Name:",
+    createMatch: "Create Race",
+    matchName: "Race Name:",
     optionsIntro: "Each option = one ticket. Type can be WIN / QUINELLA / TRIO etc., name is whatever you understand (e.g. 13, 6-7, 6-7-13).",
     addOption: "Add option",
     createBtn: "Create match",
@@ -281,7 +281,7 @@ function addOptionRow(prefType = "", prefName = "", prefOdds = "") {
   row.className = "option-row";
   row.innerHTML = `
     <input type="text" class="opt-type" placeholder="種類 type (WIN/QUINELLA/TRIO)">
-    <input type="text" class="opt-name" placeholder="名稱 name (例如 13 / 6-7-13)">
+    <input type="text" class="opt-name" placeholder="名稱 pp (例如 13 / 6-7-13)">
     <input type="number" class="opt-odds" step="0.1" placeholder="賠率 odds">
     <button class="danger" type="button">X</button>
   `;
