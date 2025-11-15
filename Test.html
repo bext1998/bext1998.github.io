@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Chrono Genesis Betting Chronicle</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px;
+      line-height: 1.6;
+      background: #f4f4f8;
+    }
+    h1, h2 { margin-top: 0.5em; }
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    label { display: block; margin: 4px 0; }
+    input[type="text"], input[type="number"], select {
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      font-size: 14px;
+      margin: 2px 0 8px 0;
+    }
+    input[type="number"] { width: 120px; }
+    button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 2px 6px 2px 0;
+    }
+    button.primary { background: #2962ff; color: #fff; }
+    button.secondary { background: #e0e0e0; }
+    button.danger { background: #d32f2f; color: #fff; }
+    .option-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      border-left: 4px solid #2962ff;
+      padding-left: 8px;
+      margin-bottom: 8px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th { background: #efefef; }
+    .badge {
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .win { background: #c8e6c9; color: #1b5e20; }
+    .lose { background: #ffcdd2; color: #b71c1c; }
+    .pending { background: #fff9c4; color: #5f4100; }
+    .lang-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 999;
+    }
+    .small { font-size: 12px; color: #555; }
+    @media (max-width: 600px) {
+      .option-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<button id="langToggle" class="primary lang-toggle">中文 / EN</button>
+
+<h1 id="title">Chrono Genesis 賭馬啟示錄</h1>
+<p id="subtitle" class="small">你的個人賽馬預測與下注模擬器</p>
+
+<!-- 點數區 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secPointsTitle">點數紀錄</h2>
+  </div>
+  <p><span id="currentPointsLabel">目前總點數：</span> <strong id="pointsDisplay">0</strong></p>
+  <p id="pointsHint" class="small">點數可為負，不會自動重設。</p>
+</div>
+
+<!-- 建立賽事 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secCreateMatchTitle">建立新賽事</h2>
+  </div>
+
+  <label>
+    <span id="matchNameLabel">賽事名稱：</span>
+    <input type="text" id="matchNameInput">
+  </label>
+
+  <p id="optionsIntro" class="small">
+    一個選項 = 一張馬券。種類可以填 WIN / QUINELLA / TRIO 等，名稱自己看得懂就好（例如 13、6-7、6-7-13）。
+  </p>
+
+  <!-- BOX 展開小工具 -->
+  <div class="card" style="background:#fafafa; padding:12px; margin-bottom:12px;">
+    <p class="small">
+      <strong>BOX 展開小工具 (BOX helper)</strong><br>
+      輸入馬番，例如：<code>6 7 13 16</code>，選擇馬連或三連複，系統會自動產生所有組合並加入下方選項。<br>
+      Enter horse numbers (e.g. <code>6 7 13 16</code>), pick QUINELLA or TRIO BOX and it will create all combinations.
+    </p>
+    <input type="text" id="boxNumbersInput" placeholder="例：6 7 13 16 / e.g. 6 7 13 16">
+    <select id="boxMode">
+      <option value="quinella">馬連 BOX（2 頭組合 / 2-horse）</option>
+      <option value="trio">三連複 BOX（3 頭組合 / 3-horse）</option>
+    </select>
+    <button class="secondary" type="button" onclick="expandBox()">BOX 展開 → 新增選項</button>
+  </div>
+
+  <div id="optionsContainer"></div>
+
+  <button class="secondary" id="btnAddOption" type="button" onclick="addOptionRow()">新增選項</button>
+  <button class="primary" id="btnCreateMatch" type="button" onclick="createMatch()">建立賽事</button>
+</div>
+
+<!-- 開放下注 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secBetTitle">進行下注</h2>
+  </div>
+  <div id="openMatchesContainer"></div>
+  <p id="noOpenMatchesMsg" class="small"></p>
+</div>
+
+<!-- 結算 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secSettleTitle">賽事結算</h2>
+  </div>
+  <div id="settleMatchesContainer"></div>
+  <p id="noSettleMatchesMsg" class="small"></p>
+</div>
+
+<!-- 紀錄 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secHistoryTitle">下注紀錄</h2>
+  </div>
+  <div id="betsContainer"></div>
+</div>
+
+<!-- 系統 -->
+<div class="card">
+  <div class="section-title">
+    <h2 id="secSystemTitle">系統操作</h2>
+  </div>
+  <button class="danger" id="btnResetAll" onclick="resetAll()">清空所有資料</button>
+  <span id="resetHint" class="small">（無法復原）</span>
+</div>
+
+<script>
+const STORAGE_KEY = "keibaGameV5";
+
+let state = {
+  points: 0,
+  matches: [], // {id, name, status, options:[{type,name,odds}]}
+  bets: [],    // {matchId, matchName, type, optionName, odds, amount, result}
+  lang: "zh"
+};
+
+const LANG = {
+  zh: {
+    title: "創世駒的賭馬啟示錄",
+    subtitle: "你的個人賽馬預測與下注模擬器",
+    pointsTitle: "點數紀錄",
+    pointsLabel: "目前總點數：",
+    pointsHint: "點數可為負，不會自動重設。",
+    createMatch: "建立新賽事",
+    matchName: "賽事名稱：",
+    optionsIntro: "一個選項 = 一張馬券。種類可以填 WIN / QUINELLA / TRIO 等，名稱自己看得懂就好（例如 13、6-7、6-7-13）。",
+    addOption: "新增選項",
+    createBtn: "建立賽事",
+    betTitle: "進行下注",
+    noOpenMatch: "目前沒有開放下注的賽事。",
+    settleTitle: "賽事結算",
+    noSettleMatch: "目前沒有需要結算的賽事。",
+    historyTitle: "下注紀錄",
+    systemTitle: "系統操作",
+    resetAll: "清空所有資料",
+    resetHint: "（無法復原）",
+    langToggle: "中文 / EN",
+    btnBet: "下注",
+    btnSettle: "結算",
+    confirmReset: "確定要清空所有資料嗎？（不可復原）",
+    alertMatchName: "請輸入賽事名稱！",
+    alertNoOption: "至少新增一個選項。",
+    alertOptionIncomplete: "有選項沒有填完（種類 / 名稱 / 賠率），請確認。",
+    alertStake: "請輸入下注點數（可以為負數嗎？不建議，請填整數）。",
+    stakePrompt: "下注點數："
+  },
+  en: {
+    title: "Chrono Genesis Betting Chronicle",
+    subtitle: "Your personal horse racing prediction & betting simulator",
+    pointsTitle: "Points",
+    pointsLabel: "Total points:",
+    pointsHint: "Points may go negative and never reset automatically.",
+    createMatch: "Create Match",
+    matchName: "Match Name:",
+    optionsIntro: "Each option = one ticket. Type can be WIN / QUINELLA / TRIO etc., name is whatever you understand (e.g. 13, 6-7, 6-7-13).",
+    addOption: "Add option",
+    createBtn: "Create match",
+    betTitle: "Place bets",
+    noOpenMatch: "No open matches.",
+    settleTitle: "Settle matches",
+    noSettleMatch: "No matches to settle.",
+    historyTitle: "Bet history",
+    systemTitle: "System",
+    resetAll: "Reset all data",
+    resetHint: "(Cannot be undone)",
+    langToggle: "中文 / EN",
+    btnBet: "Bet",
+    btnSettle: "Settle",
+    confirmReset: "Clear ALL data? This cannot be undone.",
+    alertMatchName: "Please enter match name!",
+    alertNoOption: "Please add at least one option.",
+    alertOptionIncomplete: "Some options are incomplete (type / name / odds).",
+    alertStake: "Please enter a stake (integer).",
+    stakePrompt: "Stake (points):"
+  }
+};
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { state = JSON.parse(raw); } catch(e) {}
+  }
+}
+
+function updateLangTexts() {
+  const L = LANG[state.lang];
+  document.getElementById("title").textContent = L.title;
+  document.getElementById("subtitle").textContent = L.subtitle;
+  document.getElementById("secPointsTitle").textContent = L.pointsTitle;
+  document.getElementById("currentPointsLabel").textContent = L.pointsLabel;
+  document.getElementById("pointsHint").textContent = L.pointsHint;
+  document.getElementById("secCreateMatchTitle").textContent = L.createMatch;
+  document.getElementById("matchNameLabel").textContent = L.matchName;
+  document.getElementById("optionsIntro").textContent = L.optionsIntro;
+  document.getElementById("btnAddOption").textContent = L.addOption;
+  document.getElementById("btnCreateMatch").textContent = L.createBtn;
+  document.getElementById("secBetTitle").textContent = L.betTitle;
+  document.getElementById("noOpenMatchesMsg").textContent = L.noOpenMatch;
+  document.getElementById("secSettleTitle").textContent = L.settleTitle;
+  document.getElementById("noSettleMatchesMsg").textContent = L.noSettleMatch;
+  document.getElementById("secHistoryTitle").textContent = L.historyTitle;
+  document.getElementById("secSystemTitle").textContent = L.systemTitle;
+  document.getElementById("btnResetAll").textContent = L.resetAll;
+  document.getElementById("resetHint").textContent = L.resetHint;
+  document.getElementById("langToggle").textContent = L.langToggle;
+}
+
+/* 新增一個選項 row，可給預設值 */
+function addOptionRow(prefType = "", prefName = "", prefOdds = "") {
+  const row = document.createElement("div");
+  row.className = "option-row";
+  row.innerHTML = `
+    <input type="text" class="opt-type" placeholder="種類 type (WIN/QUINELLA/TRIO)">
+    <input type="text" class="opt-name" placeholder="名稱 name (例如 13 / 6-7-13)">
+    <input type="number" class="opt-odds" step="0.1" placeholder="賠率 odds">
+    <button class="danger" type="button">X</button>
+  `;
+  const btn = row.querySelector("button");
+  btn.onclick = () => row.remove();
+
+  if (prefType) row.querySelector(".opt-type").value = prefType;
+  if (prefName) row.querySelector(".opt-name").value = prefName;
+  if (prefOdds) row.querySelector(".opt-odds").value = prefOdds;
+
+  document.getElementById("optionsContainer").appendChild(row);
+}
+
+/* BOX 展開：輸入馬番 -> 自動產生組合成多個選項 */
+function expandBox() {
+  const raw = document.getElementById("boxNumbersInput").value;
+  const mode = document.getElementById("boxMode").value; // 'quinella' or 'trio'
+  const numbers = (raw.match(/\d+/g) || []).map(s => s.replace(/^0+/, "") || "0");
+  if (numbers.length === 0) {
+    alert("請輸入馬番數字，例如：6 7 13 16\nPlease enter horse numbers, e.g. 6 7 13 16");
+    return;
+  }
+  const uniq = Array.from(new Set(numbers));
+  const k = mode === "quinella" ? 2 : 3;
+  if (uniq.length < k) {
+    alert("馬番數量太少，無法展開 BOX。\nNot enough numbers to expand BOX.");
+    return;
+  }
+  // 依數字大小排序
+  uniq.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+
+  function combine(arr, k) {
+    const res = [];
+    function helper(start, path) {
+      if (path.length === k) {
+        res.push(path.slice());
+        return;
+      }
+      for (let i = start; i < arr.length; i++) {
+        path.push(arr[i]);
+        helper(i + 1, path);
+        path.pop();
+      }
+    }
+    helper(0, []);
+    return res;
+  }
+
+  const combos = combine(uniq, k);
+  combos.forEach(c => {
+    const name = c.join("-");
+    const type = mode === "quinella" ? "QUINELLA" : "TRIO";
+    addOptionRow(type, name, "");
+  });
+
+  alert(`已產生 ${combos.length} 個組合並加入選項。\nGenerated ${combos.length} combinations as options.`);
+}
+
+/* 建立賽事 */
+function createMatch() {
+  const L = LANG[state.lang];
+  const name = document.getElementById("matchNameInput").value.trim();
+  if (!name) return alert(L.alertMatchName);
+
+  const rows = Array.from(document.querySelectorAll(".option-row"));
+  if (rows.length === 0) return alert(L.alertNoOption);
+
+  const options = [];
+  for (const r of rows) {
+    const type = r.querySelector(".opt-type").value.trim();
+    const optName = r.querySelector(".opt-name").value.trim();
+    const oddsVal = r.querySelector(".opt-odds").value.trim();
+    const odds = parseFloat(oddsVal);
+    if (!type || !optName || isNaN(odds)) {
+      return alert(L.alertOptionIncomplete);
+    }
+    options.push({ type, name: optName, odds });
+  }
+
+  state.matches.push({
+    id: Date.now(),
+    name,
+    status: "open",
+    options
+  });
+
+  document.getElementById("matchNameInput").value = "";
+  document.getElementById("optionsContainer").innerHTML = "";
+  saveState();
+  render();
+}
+
+/* 下注 */
+function placeBet(matchId, optionIndex) {
+  const L = LANG[state.lang];
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+
+  const opt = match.options[optionIndex];
+  const input = prompt(L.stakePrompt);
+  if (input === null) return;
+  const amount = parseInt(input, 10);
+  if (isNaN(amount)) return alert(L.alertStake);
+
+  state.bets.push({
+    matchId,
+    matchName: match.name,
+    type: opt.type,
+    optionName: opt.name,
+    odds: opt.odds,
+    amount,
+    result: "pending"
+  });
+
+  state.points -= amount;
+  saveState();
+  render();
+}
+
+/* 結算：輸入中獎「名稱」 */
+function settleMatch(matchId) {
+  const match = state.matches.find(m => m.id === matchId);
+  if (!match) return;
+  const names = match.options.map(o => o.name).join("\n");
+  const answer = prompt(
+    "請輸入中獎的選項名稱（完全一致） / Enter winning option name:\n\n" + names
+  );
+  if (!answer) return;
+  const winName = answer.trim();
+
+  match.status = "done";
+
+  state.bets.forEach(b => {
+    if (b.matchId !== matchId) return;
+    if (b.optionName === winName) {
+      b.result = "win";
+      state.points += b.amount * b.odds;
+    } else {
+      b.result = "lose";
+    }
+  });
+
+  saveState();
+  render();
+}
+
+/* 重置所有資料 */
+function resetAll() {
+  const L = LANG[state.lang];
+  if (!confirm(L.confirmReset)) return;
+  state.points = 0;
+  state.matches = [];
+  state.bets = [];
+  saveState();
+  render();
+}
+
+/* 渲染畫面 */
+function render() {
+  const L = LANG[state.lang];
+  document.getElementById("pointsDisplay").textContent = state.points;
+
+  const openC = document.getElementById("openMatchesContainer");
+  const settleC = document.getElementById("settleMatchesContainer");
+  const betsC = document.getElementById("betsContainer");
+  openC.innerHTML = "";
+  settleC.innerHTML = "";
+  betsC.innerHTML = "";
+
+  // 開放下注的賽事
+  const openMatches = state.matches.filter(m => m.status === "open");
+  if (openMatches.length === 0) {
+    document.getElementById("noOpenMatchesMsg").textContent = L.noOpenMatch;
+  } else {
+    document.getElementById("noOpenMatchesMsg").textContent = "";
+  }
+  openMatches.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "card";
+    let html = `<h3>${m.name}</h3>`;
+    html += `<table><tr><th>種類</th><th>名稱</th><th>賠率</th><th></th></tr>`;
+    m.options.forEach((o, i) => {
+      html += `<tr>
+        <td>${o.type}</td>
+        <td>${o.name}</td>
+        <td>${o.odds}</td>
+        <td><button type="button" onclick="placeBet(${m.id}, ${i})">${L.btnBet}</button></td>
+      </tr>`;
+    });
+    html += `</table>`;
+    div.innerHTML = html;
+    openC.appendChild(div);
+  });
+
+  // 結算區（同樣列出 status=open 的賽事）
+  if (openMatches.length === 0) {
+    document.getElementById("noSettleMatchesMsg").textContent = L.noSettleMatch;
+  } else {
+    document.getElementById("noSettleMatchesMsg").textContent = "";
+  }
+  openMatches.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <h3>${m.name}</h3>
+      <button class="primary" type="button" onclick="settleMatch(${m.id})">${L.btnSettle}</button>
+    `;
+    settleC.appendChild(div);
+  });
+
+  // 下注紀錄
+  if (state.bets.length === 0) {
+    betsC.innerHTML = `<p class="small">尚無下注紀錄 / No bets yet.</p>`;
+  } else {
+    let html = `<table><tr>
+      <th>賽事 / Match</th>
+      <th>種類 / Type</th>
+      <th>選項 / Option</th>
+      <th>點數 / Stake</th>
+      <th>結果 / Result</th>
+    </tr>`;
+    state.bets.slice().reverse().forEach(b => {
+      let badge = `<span class="badge pending">待定 / Pending</span>`;
+      if (b.result === "win") badge = `<span class="badge win">中獎 / Win</span>`;
+      if (b.result === "lose") badge = `<span class="badge lose">未中 / Lose</span>`;
+      html += `<tr>
+        <td>${b.matchName}</td>
+        <td>${b.type}</td>
+        <td>${b.optionName}</td>
+        <td>${b.amount}</td>
+        <td>${badge}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+    betsC.innerHTML = html;
+  }
+}
+
+/* 語言切換按鈕 */
+document.getElementById("langToggle").onclick = () => {
+  state.lang = state.lang === "zh" ? "en" : "zh";
+  saveState();
+  updateLangTexts();
+  render();
+};
+
+/* 初始化 */
+loadState();
+updateLangTexts();
+if (document.getElementById("optionsContainer").children.length === 0) {
+  addOptionRow();
+}
+render();
+</script>
+
+</body>
+</html>
