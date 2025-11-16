@@ -1035,19 +1035,20 @@ function renderBetting() {
     const dateLabel = t("labelDate");
     const dateText = race.date || t("dateNotSet");
 
-    let html = `<h3>${race.name}</h3>
+        let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
-      <table>
-        <thead>
-          <tr>
-            <th>${t("labelType")}</th>
-            <th>${t("labelName")}</th>
-            <th class="right">Odds</th>
-            <th class="right">${t("labelStake")}</th>
-            <th>${t("labelActions")}</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>${t("labelType")}</th>
+              <th>${t("labelName")}</th>
+              <th class="right">Odds</th>
+              <th class="right">${t("labelStake")}</th>
+              <th>${t("labelActions")}</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     race.options.forEach((opt, idx) => {
       html += `
@@ -1061,11 +1062,11 @@ function renderBetting() {
         </tr>
       `;
     });
-    html += `</tbody></table>`;
-    div.innerHTML = html;
-    container.appendChild(div);
-  });
-}
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
 
 /* ===== 渲染結算區 ===== */
 function renderSettle() {
@@ -1116,7 +1117,7 @@ function renderHistory() {
     container.appendChild(p);
     return;
   }
-  const table = document.createElement("table");
+    const table = document.createElement("table");
   table.innerHTML = `
     <thead>
       <tr>
@@ -1157,7 +1158,11 @@ function renderHistory() {
     `;
     tbody.appendChild(tr);
   });
-  container.appendChild(table);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "table-scroll";
+  wrapper.appendChild(table);
+  container.appendChild(wrapper);
 }
 
 /* ===== reset ===== */
@@ -1202,3 +1207,4 @@ document.getElementById("langToggle").onclick = () => {
 </body>
 
 </html>
+
