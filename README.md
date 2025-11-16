@@ -11,34 +11,28 @@ https://bext1998.github.io/umapyoi.html
 
 ---
 
-### 📌 附註 Notes
+### 📌 實戰對照資源 Live Info & Odds References
 
-為了更完整體驗模擬器遊戲流程，可參考以下資訊來源：
+為了更完整體驗模擬器遊戲流程，你可以在遊玩時同時參考以下實際賽馬資訊來源：
 
-- 🎥 **JRA 官方直播（需視區域而定，可能需要 VPN）**  
-  https://www.jra.go.jp/
+- 🏇 **JRA 官方出馬表／賽事資訊（含直播入口）**  
+  [https://www.jra.go.jp/JRADB/accessD.html](https://www.jra.go.jp/JRADB/accessD.html)  
 
-- 📘 **Netkeiba 英文版資訊**  
-  https://en.netkeiba.com/
+- 📊 **Netkeiba 英文版（JRA 賽事資訊與賠率、數據等）**  
+  https://en.netkeiba.com/  
 
-To enhance your simulation experience, you may refer to:
-
-- 🎥 **Official JRA Live Broadcast** (VPN may be required depending on region)  
-  https://www.jra.go.jp/
-
-- 📘 **Netkeiba English Version**  
-  https://en.netkeiba.com/
+若你所在區域無法直接觀看 JRA 官方直播，可能需要透過 VPN 連線至可收看地區後再行觀看。
 
 ---
 
-### ⚠️ 警告說明 Warning
+### 🎯 關於賽馬與投注的看法  
+### Perspective on Horse Racing & Betting
 
-本網站僅作為 **娛樂性模擬** 工具，所有預測、賠率與下注內容皆為虛構生成，  
-**不具任何現實賭博性質，也不鼓勵真實投注行為**。
+本專案僅作為娛樂用途。賽馬文化包含血統、訓練、戰績分析、賽事氛圍等多種面向，**投注只是其中的一小部分**。  
+**小賭怡情無妨，但務必保持節制，避免過度投入或影響日常生活與財務狀況。**
 
-This website is an **entertainment-only simulation tool**.  
-All predictions, odds, and betting mechanics are fictional.  
-**No real gambling is involved, and real-money betting is not encouraged.**
+This project is intended purely for entertainment. Horse racing includes many aspects such as breeding, training, form analysis, and the race-day atmosphere — **betting is only a small part of the overall experience**.  
+**Casual and responsible play is fine, but please keep it in moderation and avoid any form of excessive gambling or financial strain.**
 
 ---
 
