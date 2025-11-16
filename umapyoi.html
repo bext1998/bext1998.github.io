@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
- <link rel="shortcut icon" type="image/x-icon" href="favicon.png?">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chrono Genesis Betting Chronicle</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.png?">
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -32,7 +34,12 @@
       margin-bottom: 8px;
     }
     .section-title h2 { margin: 0; }
-    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
       padding: 5px 7px;
       border-radius: 4px;
       border: 1px solid #ccc;
@@ -40,6 +47,7 @@
       margin: 2px 0 6px 0;
     }
     input[type="number"] { width: 120px; }
+
     button {
       padding: 6px 12px;
       border-radius: 4px;
@@ -51,6 +59,7 @@
     button.primary { background: #007c3e; color: #fff; }
     button.secondary { background: #e0e0e0; color: #222; }
     button.danger { background: #c62828; color: #fff; }
+
     .flex-row {
       display: flex;
       flex-wrap: wrap;
@@ -63,12 +72,28 @@
       gap: 6px;
       margin-bottom: 6px;
     }
-    .lang-toggle {
-      position: fixed;
-      right: 12px;
-      top: 12px;
-      z-index: 10;
+
+    /* 導覽列與語言切換 */
+    .navbar {
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 8px 16px;
+      margin: 8px 0 16px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
+    .navbar a { text-decoration: none; }
+    .navbar button {
+      width: auto;
+      margin-bottom: 0;
+    }
+    .lang-toggle {
+      margin-right: auto;
+    }
+
     table {
       border-collapse: collapse;
       width: 100%;
@@ -83,6 +108,7 @@
     th {
       background: #f3f3f3;
     }
+
     .badge {
       display: inline-block;
       padding: 2px 6px;
@@ -93,34 +119,115 @@
     .badge.win { background: #c8e6c9; color: #1b5e20; }
     .badge.lose { background: #ffcdd2; color: #b71c1c; }
     .badge.pending { background: #fff9c4; color: #8d6e63; }
+
     .right { text-align: right; }
+
+    /* 表格外層容器：手機版用來橫向捲動 */
+    .table-scroll {
+      width: 100%;
+    }
+
+    /* ===== 手機版：螢幕寬度 ≤ 720px ===== */
     @media (max-width: 720px) {
-      body { padding: 8px; }
-      .option-row { flex-direction: column; }
+      body {
+        padding: 8px;
+        max-width: 100%;
+        font-size: 15px;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.3;
+      }
+      h2 { font-size: 18px; }
+      h3 { font-size: 16px; }
+
+      .card {
+        padding: 10px 12px;
+        margin-bottom: 12px;
+      }
+
+      .flex-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .option-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        max-width: 100%;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+
+      input[type="number"] {
+        width: 100%;
+      }
+
+      button.primary,
+      button.secondary {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 6px;
+        font-size: 16px;
+        padding: 10px 14px;
+      }
+
+      /* 券種行裡的小 X 按鈕維持小顆 */
+      .option-row button.danger {
+        width: auto;
+        padding: 4px 8px;
+        font-size: 14px;
+        align-self: flex-start;
+      }
+
+      .navbar {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding: 6px 10px;
+      }
+
+      .navbar button {
+        width: auto;
+        font-size: 14px;
+        padding: 6px 10px;
+        margin-bottom: 0;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table-scroll table {
+        min-width: 640px;
+      }
     }
-    .navbar {
-      background: #ffffff;
-      border-radius: 6px;
-      padding: 8px 16px;
-      margin: 8px 0 16px 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      display: flex;
-      justify-content: flex-end;
-    }
-    .navbar a { text-decoration: none; }
   </style>
 </head>
 <body>
-
-<button id="langToggle" class="primary lang-toggle" type="button">中文 / EN</button>
 
 <h1 id="mainTitleZh">創世駒的賭馬啟示錄</h1>
 <h1 id="mainTitleEn" style="display:none;">Chrono Genesis Betting Chronicle</h1>
 <p id="sloganZh" class="small">你的個人賽馬預測與下注模擬器</p>
 <p id="sloganEn" class="small" style="display:none;">Your personal horse racing prediction &amp; betting simulator</p>
 
-<!-- Navigation bar：只留 PDF 按鈕 -->
+<!-- 導覽列：左邊語言切換，右邊 PDF -->
 <div class="navbar">
+  <button id="langToggle" class="primary lang-toggle" type="button">中文 / EN</button>
   <a href="https://github.com/bext1998/bext1998.github.io/blob/main/how_to_bet_en.pdf" target="_blank" rel="noopener">
     <button class="secondary" type="button" id="howToBetBtn">如何下注說明（PDF）</button>
   </a>
@@ -152,6 +259,54 @@
     <span id="raceDateLabel">賽事日期：</span>
     <input type="date" id="raceDateInput">
   </label>
+
+  <!-- 競馬場 / 場地 / 場次 -->
+  <div class="flex-row">
+    <label>
+      <span id="racecourseLabelSpan">競馬場：</span>
+      <select id="racecourseSelect">
+        <option value="">未選擇</option>
+        <option value="SAPPORO">札幌</option>
+        <option value="HAKODATE">函館</option>
+        <option value="FUKUSHIMA">福島</option>
+        <option value="NIIGATA">新潟</option>
+        <option value="TOKYO">東京</option>
+        <option value="NAKAYAMA">中山</option>
+        <option value="CHUKYO">中京</option>
+        <option value="KYOTO">京都</option>
+        <option value="HANSHIN">阪神</option>
+        <option value="KOKURA">小倉</option>
+      </select>
+    </label>
+
+    <label>
+      <span id="surfaceLabelSpan">場地：</span>
+      <select id="surfaceSelect">
+        <option value="">未選擇</option>
+        <option value="TURF">草地 / Turf</option>
+        <option value="DIRT">泥地 / Dirt</option>
+      </select>
+    </label>
+
+    <label>
+      <span id="raceNumberLabelSpan">場次：</span>
+      <select id="raceNumberSelect">
+        <option value="">未選擇</option>
+        <option value="1">1R</option>
+        <option value="2">2R</option>
+        <option value="3">3R</option>
+        <option value="4">4R</option>
+        <option value="5">5R</option>
+        <option value="6">6R</option>
+        <option value="7">7R</option>
+        <option value="8">8R</option>
+        <option value="9">9R</option>
+        <option value="10">10R</option>
+        <option value="11">11R</option>
+        <option value="12">12R</option>
+      </select>
+    </label>
+  </div>
 
   <div class="flex-row">
     <label>
@@ -199,11 +354,11 @@
   <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立比賽</button>
 </div>
 
-<!-- 賽事管理區：修改賽事日期 / 頭數 / 賠率 -->
+<!-- 賽事管理區 -->
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
-    在這裡可以修改已建立賽事的賽事日期、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。
+    在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率。下注區只能查看賠率，無法修改。
   </p>
   <div id="raceManageContainer"></div>
   <p class="small" id="noRaceManageMsg"></p>
@@ -251,7 +406,10 @@ state = {
     {
       id: number,
       name: string,
-      date: string|null,     // 新增：賽事日期 YYYY-MM-DD
+      date: string|null,
+      racecourse: string|null,
+      surface: "TURF" | "DIRT" | null,
+      raceNumber: number|null,
       runners: number,
       status: "open" | "settled",
       finishOrder: number[] | null,
@@ -261,16 +419,16 @@ state = {
     }
   ],
   bets: [
-    { id, raceId, raceName, raceDate, type, optionName, stake, result, odds, winAmount }
+    { id, raceId, raceName, raceDate, racecourse, surface, raceNumber, type, optionName, stake, result, odds, winAmount }
   ]
 }
 ============================== */
 
-const STORAGE_KEY = "CG_Betting_V7";
+const STORAGE_KEY = "CG_Betting_V8";
 
 let state = {
   lang: "zh",
-  points: 1000,   // 初始 1000 點
+  points: 1000,
   races: [],
   bets: []
 };
@@ -284,6 +442,20 @@ const BET_TYPES = [
   { code: "WIDE",      zh: "ワイド", en: "Wide" },
   { code: "TRIO",      zh: "三連複", en: "Trio" },
   { code: "TRIFECTA",  zh: "三連單", en: "Trifecta" }
+];
+
+// JRA 競馬場
+const RACECOURSES = [
+  { code: "SAPPORO",  jp: "札幌",   en: "Sapporo" },
+  { code: "HAKODATE", jp: "函館",   en: "Hakodate" },
+  { code: "FUKUSHIMA",jp: "福島",   en: "Fukushima" },
+  { code: "NIIGATA",  jp: "新潟",   en: "Niigata" },
+  { code: "TOKYO",    jp: "東京",   en: "Tokyo" },
+  { code: "NAKAYAMA", jp: "中山",   en: "Nakayama" },
+  { code: "CHUKYO",   jp: "中京",   en: "Chukyo" },
+  { code: "KYOTO",    jp: "京都",   en: "Kyoto" },
+  { code: "HANSHIN",  jp: "阪神",   en: "Hanshin" },
+  { code: "KOKURA",   jp: "小倉",   en: "Kokura" }
 ];
 
 // 文案
@@ -306,7 +478,7 @@ const I18N = {
     addOptionBtn: "新增馬券選項",
     createRaceBtn: "建立比賽",
     raceManageTitle: "賽事管理區（出賽頭數 / 賠率）",
-    raceManageHint: "在這裡可以修改已建立賽事的賽事日期、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。",
+    raceManageHint: "在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率。下注區只能查看賠率，無法修改。",
     noRaceManageMsg: "目前尚未建立任何賽事。",
     bettingTitle: "進行下注",
     bettingHint: "選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。",
@@ -351,7 +523,16 @@ const I18N = {
     placeRule2: "複勝：1–2 著內",
     placeRule3: "複勝：1–3 著內",
     placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）",
-    howToBetBtn: "如何下注說明（PDF）"
+    howToBetBtn: "如何下注說明（PDF）",
+    racecourseLabel: "競馬場：",
+    surfaceLabel: "場地：",
+    raceNumberLabel: "場次：",
+    racecourseShort: "競馬場",
+    surfaceShort: "場地",
+    raceNumberShort: "場次",
+    racecourseNotSet: "未選擇",
+    surfaceNotSet: "未選擇",
+    raceNumberNotSet: "未選擇"
   },
   en: {
     pointsSectionTitle: "Points & Hit Rates",
@@ -371,7 +552,7 @@ const I18N = {
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
-    raceManageHint: "Edit race date, runners and odds for each race here. Odds cannot be edited in the betting area.",
+    raceManageHint: "Edit race date, runners, racecourse / surface / race number and odds for each race here. Odds cannot be edited in the betting area.",
     noRaceManageMsg: "No races created yet.",
     bettingTitle: "Place Bets",
     bettingHint: "Choose a ticket and enter stake. Set / change odds only in Race Management above.",
@@ -416,7 +597,16 @@ const I18N = {
     placeRule2: "PLACE: 1st–2nd",
     placeRule3: "PLACE: 1st–3rd",
     placeRule1: "PLACE: 1st only (in practice PLACE often not sold with ≤4 runners)",
-    howToBetBtn: "How to bet (PDF)"
+    howToBetBtn: "How to bet (PDF)",
+    racecourseLabel: "Racecourse:",
+    surfaceLabel: "Surface:",
+    raceNumberLabel: "Race No.:",
+    racecourseShort: "Racecourse",
+    surfaceShort: "Surface",
+    raceNumberShort: "Race No.",
+    racecourseNotSet: "Not set",
+    surfaceNotSet: "Not set",
+    raceNumberNotSet: "Not set"
   }
 };
 
@@ -428,6 +618,22 @@ function betTypeLabel(code) {
   const bt = BET_TYPES.find(b => b.code === code);
   if (!bt) return code;
   return state.lang === "zh" ? bt.zh : bt.en;
+}
+
+function racecourseLabel(code) {
+  if (!code) return "";
+  const rc = RACECOURSES.find(r => r.code === code);
+  if (!rc) return code;
+  return state.lang === "zh" ? rc.jp : rc.en;
+}
+function surfaceLabel(code) {
+  if (code === "TURF") return state.lang === "zh" ? "草地" : "Turf";
+  if (code === "DIRT") return state.lang === "zh" ? "泥地" : "Dirt";
+  return "";
+}
+function raceNumberText(num) {
+  if (!num && num !== 0) return "";
+  return num + "R";
 }
 
 /* ===== 儲存 / 載入 ===== */
@@ -492,6 +698,17 @@ function updateStaticTexts() {
   document.getElementById("resetHint").textContent = t("resetHint");
   document.getElementById("langToggle").textContent = t("langToggle");
   document.getElementById("howToBetBtn").textContent = t("howToBetBtn");
+
+  document.getElementById("racecourseLabelSpan").textContent = t("racecourseLabel");
+  document.getElementById("surfaceLabelSpan").textContent = t("surfaceLabel");
+  document.getElementById("raceNumberLabelSpan").textContent = t("raceNumberLabel");
+
+  const rcSel = document.getElementById("racecourseSelect");
+  if (rcSel && rcSel.options.length > 0) rcSel.options[0].textContent = t("racecourseNotSet");
+  const surfSel = document.getElementById("surfaceSelect");
+  if (surfSel && surfSel.options.length > 0) surfSel.options[0].textContent = t("surfaceNotSet");
+  const numSel = document.getElementById("raceNumberSelect");
+  if (numSel && numSel.options.length > 0) numSel.options[0].textContent = t("raceNumberNotSet");
 }
 
 /* ===== 建立賽事：券種 row ===== */
@@ -537,7 +754,7 @@ function addOptionRow(prefType = "", prefName = "") {
 /* ===== BOX 展開 ===== */
 function expandBox() {
   const raw = document.getElementById("boxNumbersInput").value;
-  const mode = document.getElementById("boxModeSelect").value; // QUINELLA / TRIO / TRIFECTA
+  const mode = document.getElementById("boxModeSelect").value;
   const nums = (raw.match(/\d+/g) || []).map(s => String(parseInt(s,10)));
   if (nums.length === 0) {
     alert(state.lang === "zh"
@@ -578,6 +795,10 @@ function createRace() {
   if (isNaN(runners) || runners < 2) runners = 2;
 
   const dateStr = document.getElementById("raceDateInput").value.trim() || null;
+  const racecourseCode = document.getElementById("racecourseSelect").value || null;
+  const surfaceCode = document.getElementById("surfaceSelect").value || null;
+  const raceNumberStr = document.getElementById("raceNumberSelect").value;
+  const raceNumberVal = raceNumberStr ? parseInt(raceNumberStr, 10) : null;
 
   const rows = Array.from(document.querySelectorAll("#optionsContainer .option-row"));
   if (rows.length === 0) { alert(t("noOptions")); return; }
@@ -597,6 +818,9 @@ function createRace() {
     id: Date.now(),
     name,
     date: dateStr,
+    racecourse: racecourseCode,
+    surface: surfaceCode,
+    raceNumber: raceNumberVal,
     runners,
     status: "open",
     finishOrder: null,
@@ -606,13 +830,16 @@ function createRace() {
 
   document.getElementById("raceNameInput").value = "";
   document.getElementById("raceDateInput").value = "";
+  document.getElementById("racecourseSelect").value = "";
+  document.getElementById("surfaceSelect").value = "";
+  document.getElementById("raceNumberSelect").value = "";
   document.getElementById("optionsContainer").innerHTML = "";
   document.getElementById("runnerCountInput").value = "12";
   saveState();
   renderAll();
 }
 
-/* ===== Race 管理：修改日期 / 頭數 / 賠率 ===== */
+/* ===== Race 管理：修改 ===== */
 function updateRaceRunners(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
@@ -640,6 +867,28 @@ function updateRaceDate(raceId, value) {
   saveState();
   renderAll();
 }
+function updateRacecourse(raceId, value) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  race.racecourse = value || null;
+  saveState();
+  renderAll();
+}
+function updateRaceSurface(raceId, value) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  race.surface = value || null;
+  saveState();
+  renderAll();
+}
+function updateRaceNumber(raceId, value) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  const n = value ? parseInt(value, 10) : null;
+  race.raceNumber = isNaN(n) ? null : n;
+  saveState();
+  renderAll();
+}
 
 /* ===== 下注 ===== */
 let lastBetId = 0;
@@ -663,6 +912,9 @@ function placeBet(raceId, optIndex) {
     raceId: race.id,
     raceName: race.name,
     raceDate: race.date || null,
+    racecourse: race.racecourse || null,
+    surface: race.surface || null,
+    raceNumber: race.raceNumber || null,
     type: opt.type,
     optionName: opt.name,
     stake,
@@ -682,7 +934,7 @@ function placePayPositions(runners) {
   return 1;
 }
 
-/* ===== 判斷單一投注是否中獎 ===== */
+/* ===== 判斷是否中獎 ===== */
 function parseNumbersFromName(name) {
   return name.split(/[^0-9]+/).filter(s => s !== "").map(s => parseInt(s,10));
 }
@@ -781,7 +1033,11 @@ function autoSettleRace(raceId) {
       bet.winAmount = 0;
     }
   });
+
+  // 標記為已結算，並自動從賽事列表中刪除（不復原點數）
   race.status = "settled";
+  state.races = state.races.filter(r => r.id !== raceId);
+
   saveState();
   renderAll();
   alert(t("settleDone"));
@@ -838,7 +1094,43 @@ function renderHitStats() {
     `;
     tbody.appendChild(tr);
   });
-  container.appendChild(table);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "table-scroll";
+  wrapper.appendChild(table);
+  container.appendChild(wrapper);
+}
+
+/* ===== Helper：select option HTML ===== */
+function racecourseOptionsHtml(selected) {
+  const current = selected || "";
+  let s = `<option value="">${t("racecourseNotSet")}</option>`;
+  RACECOURSES.forEach(rc => {
+    const sel = rc.code === current ? " selected" : "";
+    const label = racecourseLabel(rc.code);
+    s += `<option value="${rc.code}"${sel}>${label}</option>`;
+  });
+  return s;
+}
+function surfaceOptionsHtml(selected) {
+  const cur = selected || "";
+  let s = `<option value="">${t("surfaceNotSet")}</option>`;
+  const list = ["TURF","DIRT"];
+  list.forEach(code => {
+    const sel = code === cur ? " selected" : "";
+    const label = surfaceLabel(code);
+    s += `<option value="${code}"${sel}>${label}</option>`;
+  });
+  return s;
+}
+function raceNumberOptionsHtml(selected) {
+  const cur = selected != null ? Number(selected) : null;
+  let s = `<option value="">${t("raceNumberNotSet")}</option>`;
+  for (let i = 1; i <= 12; i++) {
+    const sel = cur === i ? " selected" : "";
+    s += `<option value="${i}"${sel}>${i}R</option>`;
+  }
+  return s;
 }
 
 /* ===== 渲染 Race 管理 ===== */
@@ -863,15 +1155,39 @@ function renderRaceManagement() {
 
     const dateLabel = t("labelDate");
     const dateText = race.date || t("dateNotSet");
+    const courseText = race.racecourse ? racecourseLabel(race.racecourse) : t("racecourseNotSet");
+    const surfaceText = race.surface ? surfaceLabel(race.surface) : t("surfaceNotSet");
+    const numberText = race.raceNumber ? raceNumberText(race.raceNumber) : t("raceNumberNotSet");
 
     let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
+      <p class="small">${t("racecourseShort")}：${courseText}　
+        ${t("surfaceShort")}：${surfaceText}　
+        ${t("raceNumberShort")}：${numberText}</p>
       <div class="flex-row">
         <label class="small">
           ${t("labelDate")}：
           <input type="date"
             value="${race.date ? race.date : ""}"
             onchange="updateRaceDate(${race.id}, this.value)">
+        </label>
+        <label class="small">
+          ${t("racecourseLabel")}
+          <select onchange="updateRacecourse(${race.id}, this.value)">
+            ${racecourseOptionsHtml(race.racecourse || "")}
+          </select>
+        </label>
+        <label class="small">
+          ${t("surfaceLabel")}
+          <select onchange="updateRaceSurface(${race.id}, this.value)">
+            ${surfaceOptionsHtml(race.surface || "")}
+          </select>
+        </label>
+        <label class="small">
+          ${t("raceNumberLabel")}
+          <select onchange="updateRaceNumber(${race.id}, this.value)">
+            ${raceNumberOptionsHtml(race.raceNumber)}
+          </select>
         </label>
         <label class="small">
           ${t("labelRunners")}：
@@ -882,15 +1198,16 @@ function renderRaceManagement() {
         <span class="small">${t("labelPlaceRule")}：${placeRuleText}</span>
       </div>
       <div class="small" style="margin-top:4px;">${t("labelOptions")}：</div>
-      <table>
-        <thead>
-          <tr>
-            <th>${t("labelType")}</th>
-            <th>${t("labelName")}</th>
-            <th class="right">${t("labelOdds")}</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>${t("labelType")}</th>
+              <th>${t("labelName")}</th>
+              <th class="right">${t("labelOdds")}</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     race.options.forEach((opt, idx) => {
       html += `
@@ -905,7 +1222,11 @@ function renderRaceManagement() {
         </tr>
       `;
     });
-    html += `</tbody></table>`;
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
     if (race.finishOrder && race.finishOrder.length > 0) {
       html += `<p class="small">已紀錄賽果：${race.finishOrder.join(" - ")}</p>`;
     }
@@ -930,20 +1251,27 @@ function renderBetting() {
     div.className = "card";
     const dateLabel = t("labelDate");
     const dateText = race.date || t("dateNotSet");
+    const courseText = race.racecourse ? racecourseLabel(race.racecourse) : t("racecourseNotSet");
+    const surfaceText = race.surface ? surfaceLabel(race.surface) : t("surfaceNotSet");
+    const numberText = race.raceNumber ? raceNumberText(race.raceNumber) : t("raceNumberNotSet");
 
     let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
-      <table>
-        <thead>
-          <tr>
-            <th>${t("labelType")}</th>
-            <th>${t("labelName")}</th>
-            <th class="right">Odds</th>
-            <th class="right">${t("labelStake")}</th>
-            <th>${t("labelActions")}</th>
-          </tr>
-        </thead>
-        <tbody>
+      <p class="small">${t("racecourseShort")}：${courseText}　
+        ${t("surfaceShort")}：${surfaceText}　
+        ${t("raceNumberShort")}：${numberText}</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>${t("labelType")}</th>
+              <th>${t("labelName")}</th>
+              <th class="right">Odds</th>
+              <th class="right">${t("labelStake")}</th>
+              <th>${t("labelActions")}</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     race.options.forEach((opt, idx) => {
       html += `
@@ -957,7 +1285,11 @@ function renderBetting() {
         </tr>
       `;
     });
-    html += `</tbody></table>`;
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
     div.innerHTML = html;
     container.appendChild(div);
   });
@@ -984,9 +1316,16 @@ function renderSettle() {
       : t("placeRule1");
     const dateLabel = t("labelDate");
     const dateText = race.date || t("dateNotSet");
+    const courseText = race.racecourse ? racecourseLabel(race.racecourse) : t("racecourseNotSet");
+    const surfaceText = race.surface ? surfaceLabel(race.surface) : t("surfaceNotSet");
+    const numberText = race.raceNumber ? raceNumberText(race.raceNumber) : t("raceNumberNotSet");
+
     div.innerHTML = `
       <h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
+      <p class="small">${t("racecourseShort")}：${courseText}　
+        ${t("surfaceShort")}：${surfaceText}　
+        ${t("raceNumberShort")}：${numberText}</p>
       <p class="small">${t("labelRunners")}：${race.runners}　${t("labelPlaceRule")}：${placeRuleText}</p>
       <label class="small">
         ${t("finishOrderLabel")}
@@ -1039,11 +1378,18 @@ function renderHistory() {
       badge = `<span class="badge lose">${state.lang === "zh" ? "未中" : "Lose"}</span>`;
     }
     const dateText = bet.raceDate || t("dateNotSet");
+    const courseText = bet.racecourse ? racecourseLabel(bet.racecourse) : "";
+    const surfaceText = bet.surface ? surfaceLabel(bet.surface) : "";
+    const numberText = bet.raceNumber ? raceNumberText(bet.raceNumber) : "";
+    let raceExtra = "";
+    if (courseText || surfaceText || numberText) {
+      raceExtra = `<br><span class="small">${courseText} ${numberText} ${surfaceText}</span>`;
+    }
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${bet.id}</td>
       <td>${dateText}</td>
-      <td>${bet.raceName}</td>
+      <td>${bet.raceName}${raceExtra}</td>
       <td>${betTypeLabel(bet.type)} (${bet.type})</td>
       <td>${bet.optionName}</td>
       <td class="right">${bet.stake}</td>
@@ -1053,13 +1399,17 @@ function renderHistory() {
     `;
     tbody.appendChild(tr);
   });
-  container.appendChild(table);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "table-scroll";
+  wrapper.appendChild(table);
+  container.appendChild(wrapper);
 }
 
 /* ===== reset ===== */
 function resetAll() {
   if (!confirm(t("confirmReset"))) return;
-  state.points = 1000;   // 重設回 1000 點
+  state.points = 1000;
   state.races = [];
   state.bets = [];
   saveState();
@@ -1079,6 +1429,12 @@ function renderAll() {
 
 /* ===== init ===== */
 loadState();
+
+/* 把 lastBetId 調成現有 bets 的最大值，避免重複 ID */
+if (Array.isArray(state.bets) && state.bets.length > 0) {
+  lastBetId = Math.max(...state.bets.map(b => b.id || 0));
+}
+
 updateStaticTexts();
 if (typeof state.points !== "number" || isNaN(state.points)) {
   state.points = 1000;
@@ -1088,6 +1444,7 @@ if (document.getElementById("optionsContainer").children.length === 0) {
 }
 renderAll();
 
+/* 語言切換 */
 document.getElementById("langToggle").onclick = () => {
   state.lang = state.lang === "zh" ? "en" : "zh";
   saveState();
