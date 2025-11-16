@@ -136,7 +136,7 @@
       <input type="number" id="runnerCountInput" min="2" max="24" value="12">
     </label>
     <span class="small" id="placeRuleHint">
-      複勝：7頭以下 → 2著內；8頭以上 → 3著內（可在下方賽事管理區查看）
+      複勝：5–7 頭 → 2 著內；8 頭以上 → 3 著內；4 頭以下理論上不賣複勝。
     </span>
   </div>
 
@@ -176,11 +176,11 @@
   <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立 Race</button>
 </div>
 
-<!-- 賽事管理區：修改賽事名稱 / 頭數 / 賠率 -->
+<!-- 賽事管理區：修改賽事名稱 / 頭數 / 賠率 / 刪除 -->
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
-    在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。
+    在這裡可以修改已建立 Race 的出賽頭數、賽事名稱與各券種的賠率。下注區只能查看賠率，無法修改。
   </p>
   <div id="raceManageContainer"></div>
   <p class="small" id="noRaceManageMsg"></p>
@@ -220,6 +220,26 @@
 </div>
 
 <script>
+/* ========= 資料結構 =========
+state = {
+  lang: "zh" | "en",
+  points: number,
+  races: [
+    {
+      id: number,
+      name: string,
+      runners: number,
+      status: "open" | "settled",
+      finishOrder: number[] | null,
+      options: [ { type, name, odds } ]
+    }
+  ],
+  bets: [
+    { id, raceId, raceName, type, optionName, stake, result, odds, winAmount }
+  ]
+}
+============================== */
+
 const STORAGE_KEY = "CG_Betting_V7";
 
 let state = {
@@ -240,6 +260,7 @@ const BET_TYPES = [
   { code: "TRIFECTA",  zh: "三連單", en: "Trifecta" }
 ];
 
+// 文案
 const I18N = {
   zh: {
     pointsSectionTitle: "點數與命中率",
@@ -258,7 +279,7 @@ const I18N = {
     addOptionBtn: "新增馬券選項",
     createRaceBtn: "建立 Race",
     raceManageTitle: "賽事管理區（出賽頭數 / 賠率）",
-    raceManageHint: "在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。",
+    raceManageHint: "在這裡可以修改已建立 Race 的出賽頭數、賽事名稱與各券種的賠率。下注區只能查看賠率，無法修改。",
     noRaceManageMsg: "目前尚未建立任何 Race。",
     bettingTitle: "進行下注（Points Betting）",
     bettingHint: "選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。",
@@ -300,7 +321,11 @@ const I18N = {
     statHeaderRate: "命中率",
     placeRule2: "複勝：1–2 著內",
     placeRule3: "複勝：1–3 著內",
-    placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）"
+    placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）",
+    renameRaceBtn: "更名",
+    renameRacePrompt: "請輸入新的 Race 名稱：",
+    deleteRaceBtn: "刪除此 Race",
+    confirmDeleteRace: "確定要刪除此 Race 嗎？相關下注紀錄也會被刪除，點數將會回復到刪除前未參與此 Race 的狀態。"
   },
   en: {
     pointsSectionTitle: "Points & Hit Rates",
@@ -319,7 +344,7 @@ const I18N = {
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
-    raceManageHint: "Edit race name, runners and odds for each Race here. Odds cannot be edited in the betting area.",
+    raceManageHint: "Edit runners, race name and odds for each Race here. Odds cannot be edited in the betting area.",
     noRaceManageMsg: "No races created yet.",
     bettingTitle: "Place Bets (Points)",
     bettingHint: "Choose a ticket and enter stake. Set / change odds only in Race Management above.",
@@ -361,34 +386,46 @@ const I18N = {
     statHeaderRate: "Hit rate",
     placeRule2: "PLACE: 1st–2nd",
     placeRule3: "PLACE: 1st–3rd",
-    placeRule1: "PLACE: 1st only (in practice PLACE often not sold with ≤4 runners)"
+    placeRule1: "PLACE: 1st only (in practice PLACE often not sold with ≤4 runners)",
+    renameRaceBtn: "Rename",
+    renameRacePrompt: "Enter new Race name:",
+    deleteRaceBtn: "Delete this Race",
+    confirmDeleteRace: "Delete this Race? All related bets will be removed and points will be reverted as if this Race was never played."
   }
 };
 
-function t(key){ return I18N[state.lang][key] || key; }
+function t(key) {
+  return I18N[state.lang][key] || key;
+}
 
-function betTypeLabel(code){
+function betTypeLabel(code) {
   const bt = BET_TYPES.find(b => b.code === code);
   if (!bt) return code;
   return state.lang === "zh" ? bt.zh : bt.en;
 }
 
-/* 儲存 / 載入 */
-function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+/* ===== 儲存 / 載入 ===== */
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error("save error", e);
+  }
 }
-function loadState(){
-  try{
+function loadState() {
+  try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw){
+    if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") state = parsed;
     }
-  }catch(e){}
+  } catch (e) {
+    console.error("load error", e);
+  }
 }
 
-/* 靜態文字 */
-function updateStaticTexts(){
+/* ===== UI 文案更新 ===== */
+function updateStaticTexts() {
   document.getElementById("mainTitleZh").style.display = state.lang === "zh" ? "" : "none";
   document.getElementById("mainTitleEn").style.display = state.lang === "en" ? "" : "none";
   document.getElementById("sloganZh").style.display = state.lang === "zh" ? "" : "none";
@@ -429,25 +466,25 @@ function updateStaticTexts(){
   document.getElementById("langToggle").textContent = t("langToggle");
 }
 
-/* 建立賽事選項 row */
-function addOptionRow(prefType="", prefName=""){
+/* ===== 建立賽事：券種 row ===== */
+function addOptionRow(prefType = "", prefName = "") {
   const container = document.getElementById("optionsContainer");
   const row = document.createElement("div");
   row.className = "option-row";
 
-  const select = document.createElement("select");
-  select.className = "opt-type";
-  const def = document.createElement("option");
-  def.value = "";
-  def.textContent = state.lang === "zh" ? "選擇券種" : "Select bet type";
-  select.appendChild(def);
-  BET_TYPES.forEach(bt=>{
-    const o = document.createElement("option");
-    o.value = bt.code;
-    o.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
-    select.appendChild(o);
+  const typeSelect = document.createElement("select");
+  typeSelect.className = "opt-type";
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = state.lang === "zh" ? "選擇券種" : "Select bet type";
+  typeSelect.appendChild(defaultOpt);
+  BET_TYPES.forEach(bt => {
+    const opt = document.createElement("option");
+    opt.value = bt.code;
+    opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
+    typeSelect.appendChild(opt);
   });
-  if (prefType) select.value = prefType;
+  if (prefType) typeSelect.value = prefType;
 
   const nameInput = document.createElement("input");
   nameInput.type = "text";
@@ -461,63 +498,65 @@ function addOptionRow(prefType="", prefName=""){
   removeBtn.type = "button";
   removeBtn.className = "danger";
   removeBtn.textContent = "X";
-  removeBtn.onclick = ()=>row.remove();
+  removeBtn.onclick = () => row.remove();
 
-  row.appendChild(select);
+  row.appendChild(typeSelect);
   row.appendChild(nameInput);
   row.appendChild(removeBtn);
   container.appendChild(row);
 }
 
-/* BOX 展開 */
-function expandBox(){
+/* ===== BOX 展開 ===== */
+function expandBox() {
   const raw = document.getElementById("boxNumbersInput").value;
-  const mode = document.getElementById("boxModeSelect").value;
+  const mode = document.getElementById("boxModeSelect").value; // QUINELLA / TRIO / TRIFECTA
   const nums = (raw.match(/\d+/g) || []).map(s => String(parseInt(s,10)));
-  if (!nums.length){
+  if (nums.length === 0) {
     alert(state.lang === "zh"
       ? "請輸入賽馬背號 / PP，例如：6 7 13 16"
       : "Please enter horse numbers / PP, e.g. 6 7 13 16");
     return;
   }
-  const uniq = Array.from(new Set(nums)).sort((a,b)=>parseInt(a)-parseInt(b));
-  const k = mode === "QUINELLA" ? 2 : 3;
-  if (uniq.length < k){
+  const uniq = Array.from(new Set(nums)).sort((a,b) => parseInt(a) - parseInt(b));
+  const k = (mode === "QUINELLA") ? 2 : 3;
+  if (uniq.length < k) {
     alert(state.lang === "zh"
       ? "賽馬背號數量不足，無法展開 BOX。"
       : "Not enough numbers to expand BOX.");
     return;
   }
   const combos = [];
-  (function helper(start, path){
-    if (path.length === k){ combos.push(path.slice()); return; }
-    for (let i=start;i<uniq.length;i++){
+  function helper(start, path) {
+    if (path.length === k) { combos.push(path.slice()); return; }
+    for (let i = start; i < uniq.length; i++) {
       path.push(uniq[i]);
       helper(i+1, path);
       path.pop();
     }
-  })(0,[]);
+  }
+  helper(0, []);
   combos.forEach(c => addOptionRow(mode, c.join("-")));
-  alert(state.lang === "zh"
+  alert((state.lang === "zh"
     ? `已產生 ${combos.length} 組合並加入下方馬券選項。`
-    : `Generated ${combos.length} combinations and added as options.`);
+    : `Generated ${combos.length} combinations and added as options.`));
 }
 
-/* 建立 Race */
-function createRace(){
+/* ===== 建立 Race ===== */
+function createRace() {
   const name = document.getElementById("raceNameInput").value.trim();
-  if (!name){ alert(t("raceNameMissing")); return; }
+  if (!name) { alert(t("raceNameMissing")); return; }
+
   let runners = parseInt(document.getElementById("runnerCountInput").value,10);
   if (isNaN(runners) || runners < 2) runners = 2;
 
   const rows = Array.from(document.querySelectorAll("#optionsContainer .option-row"));
-  if (!rows.length){ alert(t("noOptions")); return; }
+  if (rows.length === 0) { alert(t("noOptions")); return; }
 
   const options = [];
-  for (const row of rows){
+  for (const row of rows) {
     const type = row.querySelector(".opt-type").value.trim();
     const nameStr = row.querySelector(".opt-name").value.trim();
-    if (!type || !nameStr){
+    if (!type || !nameStr) {
       alert(t("optionIncomplete"));
       return;
     }
@@ -541,34 +580,19 @@ function createRace(){
   renderAll();
 }
 
-/* === 新增：修改賽事名稱 === */
-function updateRaceName(raceId, value){
+/* ===== Race 管理：修改頭數 / 賠率 / 更名 / 刪除 ===== */
+function updateRaceRunners(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
-  const newName = value.trim();
-  if (!newName) return;
-  race.name = newName;
-  // 同步更新下注紀錄裡的 raceName
-  state.bets.forEach(b => {
-    if (b.raceId === raceId) b.raceName = newName;
-  });
-  saveState();
-  renderAll();
-}
-
-/* Race 管理：修改頭數 / 賠率 */
-function updateRaceRunners(raceId, value){
-  const race = state.races.find(r=>r.id===raceId);
-  if (!race) return;
-  const n = parseInt(value,10);
-  if (!isNaN(n) && n >= 2){
+  const n = parseInt(value, 10);
+  if (!isNaN(n) && n >= 2) {
     race.runners = n;
     saveState();
     renderAll();
   }
 }
-function updateRaceOdds(raceId, index, value){
-  const race = state.races.find(r=>r.id===raceId);
+function updateRaceOdds(raceId, index, value) {
+  const race = state.races.find(r => r.id === raceId);
   if (!race) return;
   const opt = race.options[index];
   if (!opt) return;
@@ -578,18 +602,64 @@ function updateRaceOdds(raceId, index, value){
   renderAll();
 }
 
-/* 下注 */
+function renameRace(raceId) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  const current = race.name;
+  const newName = prompt(t("renameRacePrompt"), current);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) return;
+  race.name = trimmed;
+  // 更新下注紀錄上的 raceName
+  state.bets.forEach(b => {
+    if (b.raceId === raceId) b.raceName = trimmed;
+  });
+  saveState();
+  renderAll();
+}
+
+/* 刪除 Race：連同下注紀錄，同時還原點數 */
+function deleteRace(raceId) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  if (!confirm(t("confirmDeleteRace"))) return;
+
+  const remainingBets = [];
+  state.bets.forEach(b => {
+    if (b.raceId === raceId) {
+      // 還原點數：撤銷下注與中獎
+      // 原本：points = points - stake（下注） + winAmount（若中獎）
+      // 還原：points = points - winAmount + stake
+      if (b.result === "win") {
+        state.points -= (b.winAmount || 0);
+        state.points += b.stake;
+      } else {
+        // lose 或 pending：只需要把 stake 加回去
+        state.points += b.stake;
+      }
+    } else {
+      remainingBets.push(b);
+    }
+  });
+  state.bets = remainingBets;
+  state.races = state.races.filter(r => r.id !== raceId);
+  saveState();
+  renderAll();
+}
+
+/* ===== 下注 ===== */
 let lastBetId = 0;
-function placeBet(raceId, optIndex){
-  const race = state.races.find(r=>r.id===raceId);
+function placeBet(raceId, optIndex) {
+  const race = state.races.find(r => r.id === raceId);
   if (!race || race.status !== "open") return;
   const opt = race.options[optIndex];
   if (!opt) return;
 
   const stakeStr = prompt(t("stakePrompt"));
   if (stakeStr === null) return;
-  const stake = parseInt(stakeStr,10);
-  if (isNaN(stake) || !Number.isInteger(stake)){
+  const stake = parseInt(stakeStr, 10);
+  if (isNaN(stake) || !Number.isInteger(stake)) {
     alert(t("stakeError"));
     return;
   }
@@ -611,126 +681,143 @@ function placeBet(raceId, optIndex){
   renderAll();
 }
 
-/* 複勝名次規則 */
-function placePayPositions(runners){
+/* ===== 複勝名次規則 ===== */
+function placePayPositions(runners) {
   if (runners >= 8) return 3;
   if (runners >= 5) return 2;
   return 1;
 }
 
-/* 判斷是否中獎 */
-function parseNumbersFromName(name){
-  return name.split(/[^0-9]+/).filter(s=>s!=="").map(s=>parseInt(s,10));
+/* ===== 判斷單一投注是否中獎 ===== */
+function parseNumbersFromName(name) {
+  return name.split(/[^0-9]+/).filter(s => s !== "").map(s => parseInt(s,10));
 }
-function isWinningBet(bet, finishOrder, runners){
+function isWinningBet(bet, finishOrder, runners) {
   const nums = parseNumbersFromName(bet.optionName);
-  if (!finishOrder.length) return false;
-  const top1 = finishOrder[0], top2 = finishOrder[1], top3 = finishOrder[2];
+  if (finishOrder.length === 0) return false;
+  const top1 = finishOrder[0];
+  const top2 = finishOrder[1];
+  const top3 = finishOrder[2];
 
-  switch (bet.type){
-    case "WIN":
-      return nums.length === 1 && nums[0] === top1;
-    case "PLACE": {
+  switch (bet.type) {
+    case "WIN": { // 單勝：中 1 著
+      if (nums.length !== 1) return false;
+      return nums[0] === top1;
+    }
+    case "PLACE": { // 複勝：依頭數判斷名次
       if (nums.length !== 1) return false;
       const k = placePayPositions(runners);
-      return finishOrder.slice(0,k).includes(nums[0]);
+      return finishOrder.slice(0, k).includes(nums[0]);
     }
-    case "QUINELLA":
+    case "QUINELLA": { // 馬連：1,2 著任意順序
       if (nums.length !== 2 || finishOrder.length < 2) return false;
-      return new Set(nums).has(top1) && new Set(nums).has(top2);
-    case "EXACTA":
-      return nums.length === 2 && finishOrder.length >= 2 &&
-             nums[0] === top1 && nums[1] === top2;
-    case "WIDE": {
+      const setA = new Set(nums);
+      const setB = new Set([top1, top2]);
+      return setA.size === 2 &&
+             setB.size === 2 &&
+             setA.has(top1) && setA.has(top2);
+    }
+    case "EXACTA": { // 馬單：1,2 著順序
+      if (nums.length !== 2 || finishOrder.length < 2) return false;
+      return nums[0] === top1 && nums[1] === top2;
+    }
+    case "WIDE": { // ワイド：任兩匹進入前 3 著
       if (nums.length !== 2) return false;
       const top = finishOrder.slice(0, Math.min(3, finishOrder.length));
       return top.includes(nums[0]) && top.includes(nums[1]) && nums[0] !== nums[1];
     }
-    case "TRIO":
+    case "TRIO": { // 三連複：1–3 著任意順序
       if (nums.length !== 3 || finishOrder.length < 3) return false;
       const setA = new Set(nums);
-      const setB = new Set([top1,top2,top3]);
+      const setB = new Set([top1, top2, top3]);
+      if (setA.size !== 3 || setB.size !== 3) return false;
       for (const n of setA) if (!setB.has(n)) return false;
       return true;
-    case "TRIFECTA":
-      return nums.length === 3 && finishOrder.length >= 3 &&
-             nums[0] === top1 && nums[1] === top2 && nums[2] === top3;
+    }
+    case "TRIFECTA": { // 三連單：1–3 著順序
+      if (nums.length !== 3 || finishOrder.length < 3) return false;
+      return nums[0] === top1 && nums[1] === top2 && nums[2] === top3;
+    }
     default:
       return false;
   }
 }
 
-/* 自動結算 */
-function autoSettleRace(raceId){
-  const race = state.races.find(r=>r.id===raceId);
+/* ===== 自動結算 ===== */
+function autoSettleRace(raceId) {
+  const race = state.races.find(r => r.id === raceId);
   if (!race || race.status !== "open") return;
   const input = document.getElementById(`finishInput-${raceId}`);
   if (!input) return;
   const raw = input.value;
-  const nums = (raw.match(/\d+/g) || []).map(s=>parseInt(s,10));
-  if (!nums.length || nums.length > 3){
+  const nums = (raw.match(/\d+/g) || []).map(s => parseInt(s,10));
+  if (nums.length === 0 || nums.length > 3) {
     alert(t("finishOrderError"));
     return;
   }
   race.finishOrder = nums;
 
-  const pendingBets = state.bets.filter(b=>b.raceId===raceId && b.result==="pending");
-  const winnersNeedOdds = [];
-  pendingBets.forEach(b=>{
-    if (isWinningBet(b, race.finishOrder, race.runners)){
-      const opt = race.options.find(o=>o.type===b.type && o.name===b.optionName);
-      if (!opt || opt.odds == null || opt.odds <= 0) winnersNeedOdds.push(b);
+  // 先檢查：所有即將中獎的投注，對應的馬券都要有賠率
+  const winnersNeedingOdds = [];
+  const pendingBets = state.bets.filter(b => b.raceId === raceId && b.result === "pending");
+  pendingBets.forEach(bet => {
+    if (isWinningBet(bet, race.finishOrder, race.runners)) {
+      const opt = race.options.find(o => o.type === bet.type && o.name === bet.optionName);
+      if (!opt || opt.odds == null || opt.odds <= 0) {
+        winnersNeedingOdds.push(bet);
+      }
     }
   });
-  if (winnersNeedOdds.length){
+  if (winnersNeedingOdds.length > 0) {
     alert(t("oddsMissingForWinner"));
     return;
   }
 
-  pendingBets.forEach(b=>{
-    const opt = race.options.find(o=>o.type===b.type && o.name===b.optionName);
+  // 結算：依賠率計算回收
+  pendingBets.forEach(bet => {
+    const opt = race.options.find(o => o.type === bet.type && o.name === bet.optionName);
     if (!opt) return;
-    const win = isWinningBet(b, race.finishOrder, race.runners);
-    if (win){
-      b.result = "win";
-      b.odds = opt.odds;
-      b.winAmount = Math.round(b.stake * opt.odds);
-      state.points += b.winAmount;
-    }else{
-      b.result = "lose";
-      b.odds = opt.odds ?? null;
-      b.winAmount = 0;
+    const win = isWinningBet(bet, race.finishOrder, race.runners);
+    if (win) {
+      bet.result = "win";
+      bet.odds = opt.odds;
+      bet.winAmount = Math.round(bet.stake * opt.odds);
+      state.points += bet.winAmount;
+    } else {
+      bet.result = "lose";
+      bet.odds = opt.odds ?? null;
+      bet.winAmount = 0;
     }
   });
   race.status = "settled";
   saveState();
-  renderAll();
+  renderAll(); // 重新渲染：已結算 Race 會自動從結算區消失
   alert(t("settleDone"));
 }
 
-/* 券種別命中率 */
-function renderHitStats(){
+/* ===== 券種別命中率 ===== */
+function renderHitStats() {
   const container = document.getElementById("hitStatsContainer");
   container.innerHTML = "";
-  const settled = state.bets.filter(b=>b.result==="win" || b.result==="lose");
+  const settled = state.bets.filter(b => b.result === "win" || b.result === "lose");
   const title = document.createElement("div");
   title.textContent = t("hitStatsTitle");
   container.appendChild(title);
 
-  if (!settled.length){
+  if (settled.length === 0) {
     const p = document.createElement("p");
-    p.className="small";
+    p.className = "small";
     p.textContent = t("hitStatsNone");
     container.appendChild(p);
     return;
   }
 
   const stats = {};
-  BET_TYPES.forEach(bt=>{ stats[bt.code]={bets:0,wins:0}; });
-  settled.forEach(b=>{
-    if (!stats[b.type]) stats[b.type]={bets:0,wins:0};
+  BET_TYPES.forEach(bt => { stats[bt.code] = { bets:0, wins:0 }; });
+  settled.forEach(b => {
+    if (!stats[b.type]) stats[b.type] = { bets:0, wins:0 };
     stats[b.type].bets++;
-    if (b.result==="win") stats[b.type].wins++;
+    if (b.result === "win") stats[b.type].wins++;
   });
 
   const table = document.createElement("table");
@@ -743,35 +830,36 @@ function renderHitStats(){
         <th class="right">${t("statHeaderRate")}</th>
       </tr>
     </thead>
-    <tbody></tbody>`;
+    <tbody></tbody>
+  `;
   const tbody = table.querySelector("tbody");
-  Object.keys(stats).forEach(code=>{
+  Object.keys(stats).forEach(code => {
     const s = stats[code];
-    if (!s.bets) return;
-    const rate = (s.wins * 100 / s.bets).toFixed(1) + "%";
+    if (s.bets === 0) return;
     const tr = document.createElement("tr");
+    const rate = s.bets > 0 ? (s.wins * 100 / s.bets).toFixed(1) + "%" : "-";
     tr.innerHTML = `
       <td>${betTypeLabel(code)} (${code})</td>
       <td class="right">${s.bets}</td>
       <td class="right">${s.wins}</td>
-      <td class="right">${rate}</td>`;
+      <td class="right">${rate}</td>
+    `;
     tbody.appendChild(tr);
   });
   container.appendChild(table);
 }
 
-/* Race 管理畫面 */
-function renderRaceManagement(){
+/* ===== 渲染 Race 管理 ===== */
+function renderRaceManagement() {
   const container = document.getElementById("raceManageContainer");
   const msg = document.getElementById("noRaceManageMsg");
   container.innerHTML = "";
-  if (!state.races.length){
+  if (state.races.length === 0) {
     msg.textContent = t("noRaceManageMsg");
     return;
   }
   msg.textContent = "";
-
-  state.races.forEach(race=>{
+  state.races.forEach(race => {
     const div = document.createElement("div");
     div.className = "card";
     div.style.marginBottom = "8px";
@@ -782,12 +870,12 @@ function renderRaceManagement(){
       : t("placeRule1");
 
     let html = `
-      <div class="flex-row">
-        <label class="small">
-          ${t("raceNameLabel")}
-          <input type="text" value="${race.name}"
-            onchange="updateRaceName(${race.id}, this.value)">
-        </label>
+      <div class="flex-row" style="justify-content: space-between; align-items: center;">
+        <div><h3 style="margin:0;">${race.name}</h3></div>
+        <div>
+          <button class="secondary" type="button" onclick="renameRace(${race.id})">${t("renameRaceBtn")}</button>
+          <button class="danger" type="button" onclick="deleteRace(${race.id})">${t("deleteRaceBtn")}</button>
+        </div>
       </div>
       <div class="flex-row">
         <label class="small">
@@ -807,21 +895,23 @@ function renderRaceManagement(){
             <th class="right">${t("labelOdds")}</th>
           </tr>
         </thead>
-        <tbody>`;
-    race.options.forEach((opt,idx)=>{
+        <tbody>
+    `;
+    race.options.forEach((opt, idx) => {
       html += `
         <tr>
           <td>${betTypeLabel(opt.type)} (${opt.type})</td>
           <td>${opt.name}</td>
           <td class="right">
             <input type="number" step="0.1" min="0"
-              value="${opt.odds!=null ? opt.odds : ""}"
+              value="${opt.odds != null ? opt.odds : ""}"
               onchange="updateRaceOdds(${race.id}, ${idx}, this.value)">
           </td>
-        </tr>`;
+        </tr>
+      `;
     });
     html += `</tbody></table>`;
-    if (race.finishOrder && race.finishOrder.length){
+    if (race.finishOrder && race.finishOrder.length > 0) {
       html += `<p class="small">已紀錄賽果：${race.finishOrder.join(" - ")}</p>`;
     }
     div.innerHTML = html;
@@ -829,18 +919,18 @@ function renderRaceManagement(){
   });
 }
 
-/* 下注區 */
-function renderBetting(){
+/* ===== 渲染下注區 ===== */
+function renderBetting() {
   const container = document.getElementById("bettingContainer");
   const msg = document.getElementById("noBettingMsg");
   container.innerHTML = "";
-  const openRaces = state.races.filter(r=>r.status==="open");
-  if (!openRaces.length){
+  const openRaces = state.races.filter(r => r.status === "open");
+  if (openRaces.length === 0) {
     msg.textContent = t("noBettingMsg");
     return;
   }
   msg.textContent = "";
-  openRaces.forEach(race=>{
+  openRaces.forEach(race => {
     const div = document.createElement("div");
     div.className = "card";
     let html = `<h3>${race.name}</h3>
@@ -854,17 +944,19 @@ function renderBetting(){
             <th>${t("labelActions")}</th>
           </tr>
         </thead>
-        <tbody>`;
-    race.options.forEach((opt,idx)=>{
+        <tbody>
+    `;
+    race.options.forEach((opt, idx) => {
       html += `
         <tr>
           <td>${betTypeLabel(opt.type)} (${opt.type})</td>
           <td>${opt.name}</td>
-          <td class="right">${opt.odds!=null ? opt.odds : "-"}</td>
+          <td class="right">${opt.odds != null ? opt.odds : "-"}</td>
           <td class="right">──</td>
           <td><button class="primary" type="button"
             onclick="placeBet(${race.id}, ${idx})">${t("btnBet")}</button></td>
-        </tr>`;
+        </tr>
+      `;
     });
     html += `</tbody></table>`;
     div.innerHTML = html;
@@ -872,18 +964,19 @@ function renderBetting(){
   });
 }
 
-/* 結算區 */
-function renderSettle(){
+/* ===== 渲染結算區 ===== */
+function renderSettle() {
   const container = document.getElementById("settleContainer");
   const msg = document.getElementById("noSettleMsg");
   container.innerHTML = "";
-  const openRaces = state.races.filter(r=>r.status==="open");
-  if (!openRaces.length){
+  const openRaces = state.races.filter(r => r.status === "open");
+  if (openRaces.length === 0) {
     msg.textContent = t("noSettleMsg");
     return;
   }
   msg.textContent = "";
-  openRaces.forEach(race=>{
+
+  openRaces.forEach(race => {
     const div = document.createElement("div");
     div.className = "card";
     const placeRuleText =
@@ -898,23 +991,26 @@ function renderSettle(){
         <input type="text" id="finishInput-${race.id}" placeholder="${t("finishOrderPlaceholder")}">
       </label>
       <button class="primary" type="button"
-        onclick="autoSettleRace(${race.id})">${t("btnAutoSettle")}</button>`;
+        onclick="autoSettleRace(${race.id})">${t("btnAutoSettle")}</button>
+    `;
     container.appendChild(div);
   });
 }
 
-/* 下注紀錄 */
-function renderHistory(){
+/* ===== 渲染下注紀錄 ===== */
+function renderHistory() {
   const container = document.getElementById("historyContainer");
   container.innerHTML = "";
-  if (!state.bets.length){
-    const p=document.createElement("p");
-    p.className="small";
-    p.textContent = state.lang==="zh" ? "目前尚無任何下注紀錄。" : "No bets yet.";
+  if (state.bets.length === 0) {
+    const p = document.createElement("p");
+    p.className = "small";
+    p.textContent = state.lang === "zh"
+      ? "目前尚無任何下注紀錄。"
+      : "No bets yet.";
     container.appendChild(p);
     return;
   }
-  const table=document.createElement("table");
+  const table = document.createElement("table");
   table.innerHTML = `
     <thead>
       <tr>
@@ -928,32 +1024,35 @@ function renderHistory(){
         <th>Result</th>
       </tr>
     </thead>
-    <tbody></tbody>`;
+    <tbody></tbody>
+  `;
   const tbody = table.querySelector("tbody");
-  const sorted = [...state.bets].sort((a,b)=>b.id-a.id);
-  sorted.forEach(bet=>{
+  const sorted = [...state.bets].sort((a,b) => b.id - a.id);
+  sorted.forEach(bet => {
     let badge = `<span class="badge pending">Pending</span>`;
-    if (bet.result==="win")
-      badge = `<span class="badge win">${state.lang==="zh"?"中獎":"Win"}</span>`;
-    else if (bet.result==="lose")
-      badge = `<span class="badge lose">${state.lang==="zh"?"未中":"Lose"}</span>`;
-    const tr=document.createElement("tr");
+    if (bet.result === "win") {
+      badge = `<span class="badge win">${state.lang === "zh" ? "中獎" : "Win"}</span>`;
+    } else if (bet.result === "lose") {
+      badge = `<span class="badge lose">${state.lang === "zh" ? "未中" : "Lose"}</span>`;
+    }
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${bet.id}</td>
       <td>${bet.raceName}</td>
       <td>${betTypeLabel(bet.type)} (${bet.type})</td>
       <td>${bet.optionName}</td>
       <td class="right">${bet.stake}</td>
-      <td class="right">${bet.odds!=null ? bet.odds : "-"}</td>
+      <td class="right">${bet.odds != null ? bet.odds : "-"}</td>
       <td class="right">${bet.winAmount || 0}</td>
-      <td>${badge}</td>`;
+      <td>${badge}</td>
+    `;
     tbody.appendChild(tr);
   });
   container.appendChild(table);
 }
 
-/* reset */
-function resetAll(){
+/* ===== reset ===== */
+function resetAll() {
   if (!confirm(t("confirmReset"))) return;
   state.points = 0;
   state.races = [];
@@ -962,8 +1061,8 @@ function resetAll(){
   renderAll();
 }
 
-/* render all */
-function renderAll(){
+/* ===== render all ===== */
+function renderAll() {
   updateStaticTexts();
   document.getElementById("pointsDisplay").textContent = state.points;
   renderHitStats();
@@ -973,13 +1072,15 @@ function renderAll(){
   renderHistory();
 }
 
-/* init */
+/* ===== init ===== */
 loadState();
 updateStaticTexts();
-if (!document.getElementById("optionsContainer").children.length) addOptionRow();
+if (document.getElementById("optionsContainer").children.length === 0) {
+  addOptionRow();
+}
 renderAll();
 
-document.getElementById("langToggle").onclick = ()=>{
+document.getElementById("langToggle").onclick = () => {
   state.lang = state.lang === "zh" ? "en" : "zh";
   saveState();
   renderAll();
