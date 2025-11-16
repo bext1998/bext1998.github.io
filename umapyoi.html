@@ -32,7 +32,7 @@
       margin-bottom: 8px;
     }
     .section-title h2 { margin: 0; }
-    input[type="text"], input[type="number"], select, textarea {
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
       padding: 5px 7px;
       border-radius: 4px;
       border: 1px solid #ccc;
@@ -98,6 +98,16 @@
       body { padding: 8px; }
       .option-row { flex-direction: column; }
     }
+    .navbar {
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 8px 16px;
+      margin: 8px 0 16px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: flex-end;
+    }
+    .navbar a { text-decoration: none; }
   </style>
 </head>
 <body>
@@ -108,6 +118,13 @@
 <h1 id="mainTitleEn" style="display:none;">Chrono Genesis Betting Chronicle</h1>
 <p id="sloganZh" class="small">你的個人賽馬預測與下注模擬器</p>
 <p id="sloganEn" class="small" style="display:none;">Your personal horse racing prediction &amp; betting simulator</p>
+
+<!-- Navigation bar：只留 PDF 按鈕 -->
+<div class="navbar">
+  <a href="https://github.com/bext1998/bext1998.github.io/blob/main/how_to_bet_en.pdf" target="_blank" rel="noopener">
+    <button class="secondary" type="button" id="howToBetBtn">如何下注說明（PDF）</button>
+  </a>
+</div>
 
 <!-- 點數 & 券種命中率 -->
 <div class="card">
@@ -124,11 +141,16 @@
 
 <!-- 建立新賽事 -->
 <div class="card">
-  <div class="section-title"><h2 id="createRaceTitle">建立新賽事（Race）</h2></div>
+  <div class="section-title"><h2 id="createRaceTitle">建立新賽事</h2></div>
 
   <label>
-    <span id="raceNameLabel">Race 名稱：</span>
+    <span id="raceNameLabel">賽事名稱：</span>
     <input type="text" id="raceNameInput" placeholder="例：東京11R 天皇賞（秋） / Tokyo 11R Tenno Sho (Autumn)">
+  </label>
+
+  <label>
+    <span id="raceDateLabel">賽事日期：</span>
+    <input type="date" id="raceDateInput">
   </label>
 
   <div class="flex-row">
@@ -145,7 +167,7 @@
     一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。
   </p>
 
-  <!-- BOX 展開工具 -->
+  <!-- BOX 展開小工具 -->
   <div class="card" style="background:#f9fafb; margin-bottom:10px; padding:10px 12px;">
     <p class="small">
       <strong id="boxHelperTitle">BOX 展開小工具</strong><br>
@@ -174,22 +196,22 @@
   <!-- 手動新增券種 -->
   <div id="optionsContainer"></div>
   <button class="secondary" type="button" onclick="addOptionRow()" id="addOptionBtn">新增馬券選項</button>
-  <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立 Race</button>
+  <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立比賽</button>
 </div>
 
-<!-- 賽事管理區：修改賽事名稱 / 出賽頭數 / 賠率 / 刪除賽事 -->
+<!-- 賽事管理區：修改賽事日期 / 頭數 / 賠率 -->
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
-    在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。
+    在這裡可以修改已建立賽事的賽事日期、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。
   </p>
   <div id="raceManageContainer"></div>
   <p class="small" id="noRaceManageMsg"></p>
 </div>
 
-<!-- 下注 -->
+<!-- 進行下注 -->
 <div class="card">
-  <div class="section-title"><h2 id="bettingTitle">進行下注（Points Betting）</h2></div>
+  <div class="section-title"><h2 id="bettingTitle">進行下注</h2></div>
   <p class="small" id="bettingHint">
     選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。
   </p>
@@ -197,11 +219,11 @@
   <p class="small" id="noBettingMsg"></p>
 </div>
 
-<!-- 結算 -->
+<!-- 賽事結算 -->
 <div class="card">
   <div class="section-title"><h2 id="settleTitle">賽事結算（自動判斷中獎組合）</h2></div>
   <p class="small" id="settleHint">
-    每個 Race 請輸入實際前 3 著的賽馬背號 / PP（例如：<code>13 6 7</code>），系統會依券種自動判斷是否中獎並計算回收。
+    每個賽事請輸入實際前 3 著的賽馬背號 / PP（例如：<code>13 6 7</code>），系統會依券種自動判斷是否中獎並計算回收。
   </p>
   <div id="settleContainer"></div>
   <p class="small" id="noSettleMsg"></p>
@@ -209,7 +231,7 @@
 
 <!-- 下注紀錄 -->
 <div class="card">
-  <div class="section-title"><h2 id="historyTitle">下注紀錄（Bet History）</h2></div>
+  <div class="section-title"><h2 id="historyTitle">下注紀錄</h2></div>
   <div id="historyContainer"></div>
 </div>
 
@@ -217,7 +239,7 @@
 <div class="card">
   <div class="section-title"><h2 id="systemTitle">系統操作</h2></div>
   <button class="danger" type="button" onclick="resetAll()" id="resetBtn">清空所有資料（不可復原）</button>
-  <span class="small" id="resetHint">會清除所有 Race、下注紀錄與點數。</span>
+  <span class="small" id="resetHint">會清除所有賽事、下注紀錄與點數。</span>
 </div>
 
 <script>
@@ -229,16 +251,17 @@ state = {
     {
       id: number,
       name: string,
+      date: string|null,     // 新增：賽事日期 YYYY-MM-DD
       runners: number,
       status: "open" | "settled",
       finishOrder: number[] | null,
       options: [
-        { type, name, odds }
+        { type: "WIN" | "PLACE" | ... , name: "13" or "6-7-13", odds: number|null }
       ]
     }
   ],
   bets: [
-    { id, raceId, raceName, type, optionName, stake, result, odds, winAmount }
+    { id, raceId, raceName, raceDate, type, optionName, stake, result, odds, winAmount }
   ]
 }
 ============================== */
@@ -247,7 +270,7 @@ const STORAGE_KEY = "CG_Betting_V7";
 
 let state = {
   lang: "zh",
-  points: 0,
+  points: 1000,   // 初始 1000 點
   races: [],
   bets: []
 };
@@ -269,8 +292,9 @@ const I18N = {
     pointsSectionTitle: "點數與命中率",
     pointsLabel: "目前總點數：",
     pointsHint: "（下注會扣點數，中獎按賽事管理區的賠率計算回收；點數可為負，不會自動重設）",
-    createRaceTitle: "建立新賽事（Race）",
-    raceNameLabel: "Race 名稱：",
+    createRaceTitle: "建立新賽事",
+    raceNameLabel: "賽事名稱：",
+    raceDateLabel: "賽事日期：",
     runnerCountLabel: "出賽頭數：",
     placeRuleHint: "複勝：5–7 頭 → 2 著內；8 頭以上 → 3 著內；4 頭以下理論上不賣複勝。",
     optionsIntro: "一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。",
@@ -280,20 +304,20 @@ const I18N = {
     boxModeLabel: "BOX 券種：",
     boxExpandBtn: "BOX 展開 → 加入選項",
     addOptionBtn: "新增馬券選項",
-    createRaceBtn: "建立 Race",
+    createRaceBtn: "建立比賽",
     raceManageTitle: "賽事管理區（出賽頭數 / 賠率）",
-    raceManageHint: "在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。",
-    noRaceManageMsg: "目前尚未建立任何 Race。",
-    bettingTitle: "進行下注（Points Betting）",
+    raceManageHint: "在這裡可以修改已建立賽事的賽事日期、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。",
+    noRaceManageMsg: "目前尚未建立任何賽事。",
+    bettingTitle: "進行下注",
     bettingHint: "選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。",
-    noBettingMsg: "目前沒有開放中的 Race 可以下注。",
+    noBettingMsg: "目前沒有開放中的賽事可以下注。",
     settleTitle: "賽事結算（自動判斷中獎組合）",
-    settleHint: "輸入實際前 3 著的賽馬背號 / PP（例如：13 6 7），系統會依券種自動判斷是否中獎並計算回收。",
-    noSettleMsg: "目前沒有可結算的 Race。",
-    historyTitle: "下注紀錄（Bet History）",
+    settleHint: "每個賽事請輸入實際前 3 著的賽馬背號 / PP（例如：13 6 7），系統會依券種自動判斷是否中獎並計算回收。",
+    noSettleMsg: "目前沒有可結算的賽事。",
+    historyTitle: "下注紀錄",
     systemTitle: "系統操作",
     resetBtn: "清空所有資料（不可復原）",
-    resetHint: "會清除所有 Race、下注紀錄與點數。",
+    resetHint: "會清除所有賽事、下注紀錄與點數。",
     langToggle: "中文 / EN",
     labelRunners: "出賽頭數",
     labelPlaceRule: "複勝名次",
@@ -303,13 +327,15 @@ const I18N = {
     labelOdds: "賠率（可於此修改）",
     labelActions: "操作",
     labelStake: "下注點數",
+    labelDate: "賽事日期",
+    dateNotSet: "未設定",
     btnBet: "下注",
     stakePrompt: "請輸入下注點數（整數，可為 1, 100, 500 等）：",
     stakeError: "請輸入有效的下注點數（整數）。",
-    raceNameMissing: "請輸入 Race 名稱。",
+    raceNameMissing: "請輸入賽事名稱。",
     noOptions: "請至少新增一個馬券選項。",
     optionIncomplete: "有馬券選項尚未填完券種或賽馬背號 / PP，請確認。",
-    confirmReset: "確定要清空所有資料嗎？此操作無法復原。",
+    confirmReset: "確定要清空所有資料嗎？此操作無法復原，點數將重設為 1000。",
     finishOrderLabel: "前 3 著賽馬背號 / PP：",
     finishOrderPlaceholder: "例如：13 6 7",
     btnAutoSettle: "自動結算",
@@ -325,7 +351,7 @@ const I18N = {
     placeRule2: "複勝：1–2 著內",
     placeRule3: "複勝：1–3 著內",
     placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）",
-    btnDeleteRace: "刪除這個 Race（不退點數）"
+    howToBetBtn: "如何下注說明（PDF）"
   },
   en: {
     pointsSectionTitle: "Points & Hit Rates",
@@ -333,6 +359,7 @@ const I18N = {
     pointsHint: "(Stakes decrease points; winning returns are calculated using odds in Race Management. Points may go negative and never auto-reset.)",
     createRaceTitle: "Create New Race",
     raceNameLabel: "Race name:",
+    raceDateLabel: "Race date:",
     runnerCountLabel: "Number of runners:",
     placeRuleHint: "PLACE: 5–7 runners → 1st–2nd; 8+ runners → 1st–3rd; 4 or fewer: PLACE usually not offered.",
     optionsIntro: "One option = one ticket. Choose JRA bet type, and enter horse number(s) / PP using digits with '-' (e.g. 13, 6-7, 6-7-13).",
@@ -344,18 +371,18 @@ const I18N = {
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
-    raceManageHint: "Edit race name, runners and odds for each Race here. Odds cannot be edited in the betting area.",
+    raceManageHint: "Edit race date, runners and odds for each race here. Odds cannot be edited in the betting area.",
     noRaceManageMsg: "No races created yet.",
-    bettingTitle: "Place Bets (Points)",
+    bettingTitle: "Place Bets",
     bettingHint: "Choose a ticket and enter stake. Set / change odds only in Race Management above.",
     noBettingMsg: "No open races available for betting.",
     settleTitle: "Race Settlement (auto result check)",
-    settleHint: "For each Race, enter the actual top 3 finishers' horse numbers / PP (e.g. 13 6 7). The system will auto judge winners by bet type and calculate returns.",
+    settleHint: "For each race, enter the actual top 3 finishers' horse numbers / PP (e.g. 13 6 7). The system will auto judge winners by bet type and calculate returns.",
     noSettleMsg: "No races to settle.",
     historyTitle: "Bet History",
     systemTitle: "System",
     resetBtn: "Reset all data (irreversible)",
-    resetHint: "This will clear all races, bets, and points.",
+    resetHint: "This will clear all races, bets, and reset points to 1000.",
     langToggle: "中文 / EN",
     labelRunners: "Runners",
     labelPlaceRule: "PLACE rule",
@@ -365,13 +392,15 @@ const I18N = {
     labelOdds: "Odds (editable here)",
     labelActions: "Actions",
     labelStake: "Stake (pts)",
+    labelDate: "Race date",
+    dateNotSet: "Not set",
     btnBet: "Bet",
     stakePrompt: "Stake (integer points):",
     stakeError: "Please enter a valid integer stake.",
     raceNameMissing: "Please enter race name.",
     noOptions: "Please add at least one ticket option.",
     optionIncomplete: "Some options are missing bet type or horse numbers / PP.",
-    confirmReset: "Reset ALL data? This cannot be undone.",
+    confirmReset: "Reset ALL data? This cannot be undone. Points will reset to 1000.",
     finishOrderLabel: "Top 3 finishers (horse No. / PP):",
     finishOrderPlaceholder: "e.g. 13 6 7",
     btnAutoSettle: "Auto-settle",
@@ -387,7 +416,7 @@ const I18N = {
     placeRule2: "PLACE: 1st–2nd",
     placeRule3: "PLACE: 1st–3rd",
     placeRule1: "PLACE: 1st only (in practice PLACE often not sold with ≤4 runners)",
-    btnDeleteRace: "Delete this Race (no refund)"
+    howToBetBtn: "How to bet (PDF)"
   }
 };
 
@@ -434,6 +463,7 @@ function updateStaticTexts() {
 
   document.getElementById("createRaceTitle").textContent = t("createRaceTitle");
   document.getElementById("raceNameLabel").textContent = t("raceNameLabel");
+  document.getElementById("raceDateLabel").textContent = t("raceDateLabel");
   document.getElementById("runnerCountLabel").textContent = t("runnerCountLabel");
   document.getElementById("placeRuleHint").textContent = t("placeRuleHint");
   document.getElementById("optionsIntro").textContent = t("optionsIntro");
@@ -461,6 +491,7 @@ function updateStaticTexts() {
   document.getElementById("resetBtn").textContent = t("resetBtn");
   document.getElementById("resetHint").textContent = t("resetHint");
   document.getElementById("langToggle").textContent = t("langToggle");
+  document.getElementById("howToBetBtn").textContent = t("howToBetBtn");
 }
 
 /* ===== 建立賽事：券種 row ===== */
@@ -538,13 +569,15 @@ function expandBox() {
     : `Generated ${combos.length} combinations and added as options.`));
 }
 
-/* ===== 建立 Race ===== */
+/* ===== 建立賽事 ===== */
 function createRace() {
   const name = document.getElementById("raceNameInput").value.trim();
   if (!name) { alert(t("raceNameMissing")); return; }
 
   let runners = parseInt(document.getElementById("runnerCountInput").value,10);
   if (isNaN(runners) || runners < 2) runners = 2;
+
+  const dateStr = document.getElementById("raceDateInput").value.trim() || null;
 
   const rows = Array.from(document.querySelectorAll("#optionsContainer .option-row"));
   if (rows.length === 0) { alert(t("noOptions")); return; }
@@ -563,6 +596,7 @@ function createRace() {
   const race = {
     id: Date.now(),
     name,
+    date: dateStr,
     runners,
     status: "open",
     finishOrder: null,
@@ -571,13 +605,14 @@ function createRace() {
   state.races.push(race);
 
   document.getElementById("raceNameInput").value = "";
+  document.getElementById("raceDateInput").value = "";
   document.getElementById("optionsContainer").innerHTML = "";
   document.getElementById("runnerCountInput").value = "12";
   saveState();
   renderAll();
 }
 
-/* ===== Race 管理：修改頭數 / 賠率 / 賽事名稱 / 刪除 ===== */
+/* ===== Race 管理：修改日期 / 頭數 / 賠率 ===== */
 function updateRaceRunners(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
@@ -598,28 +633,10 @@ function updateRaceOdds(raceId, index, value) {
   saveState();
   renderAll();
 }
-function updateRaceName(raceId, value) {
+function updateRaceDate(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
-  const newName = value.trim();
-  if (!newName) return;
-  race.name = newName;
-  // 同步更新下注紀錄中顯示的 Race 名稱
-  state.bets.forEach(b => {
-    if (b.raceId === raceId) b.raceName = newName;
-  });
-  saveState();
-  renderAll();
-}
-function deleteRace(raceId) {
-  const race = state.races.find(r => r.id === raceId);
-  if (!race) return;
-  const msg = state.lang === "zh"
-    ? `確定要刪除「${race.name}」這個 Race 嗎？已下注的點數不會退回，相關下注紀錄會保留。`
-    : `Delete Race "${race.name}"? Stakes already placed will NOT be refunded, and bet history will remain.`;
-  if (!confirm(msg)) return;
-  // 只刪除賽事本身，不動點數與既有下注紀錄
-  state.races = state.races.filter(r => r.id !== raceId);
+  race.date = value || null;
   saveState();
   renderAll();
 }
@@ -645,6 +662,7 @@ function placeBet(raceId, optIndex) {
     id: lastBetId,
     raceId: race.id,
     raceName: race.name,
+    raceDate: race.date || null,
     type: opt.type,
     optionName: opt.name,
     stake,
@@ -676,16 +694,16 @@ function isWinningBet(bet, finishOrder, runners) {
   const top3 = finishOrder[2];
 
   switch (bet.type) {
-    case "WIN": { // 單勝：中 1 著
+    case "WIN": {
       if (nums.length !== 1) return false;
       return nums[0] === top1;
     }
-    case "PLACE": { // 複勝：依頭數判斷名次
+    case "PLACE": {
       if (nums.length !== 1) return false;
       const k = placePayPositions(runners);
       return finishOrder.slice(0, k).includes(nums[0]);
     }
-    case "QUINELLA": { // 馬連：1,2 著任意順序
+    case "QUINELLA": {
       if (nums.length !== 2 || finishOrder.length < 2) return false;
       const setA = new Set(nums);
       const setB = new Set([top1, top2]);
@@ -693,16 +711,16 @@ function isWinningBet(bet, finishOrder, runners) {
              setB.size === 2 &&
              setA.has(top1) && setA.has(top2);
     }
-    case "EXACTA": { // 馬單：1,2 著順序
+    case "EXACTA": {
       if (nums.length !== 2 || finishOrder.length < 2) return false;
       return nums[0] === top1 && nums[1] === top2;
     }
-    case "WIDE": { // ワイド：任兩匹進入前 3 著
+    case "WIDE": {
       if (nums.length !== 2) return false;
       const top = finishOrder.slice(0, Math.min(3, finishOrder.length));
       return top.includes(nums[0]) && top.includes(nums[1]) && nums[0] !== nums[1];
     }
-    case "TRIO": { // 三連複：1–3 著任意順序
+    case "TRIO": {
       if (nums.length !== 3 || finishOrder.length < 3) return false;
       const setA = new Set(nums);
       const setB = new Set([top1, top2, top3]);
@@ -710,7 +728,7 @@ function isWinningBet(bet, finishOrder, runners) {
       for (const n of setA) if (!setB.has(n)) return false;
       return true;
     }
-    case "TRIFECTA": { // 三連單：1–3 著順序
+    case "TRIFECTA": {
       if (nums.length !== 3 || finishOrder.length < 3) return false;
       return nums[0] === top1 && nums[1] === top2 && nums[2] === top3;
     }
@@ -733,7 +751,6 @@ function autoSettleRace(raceId) {
   }
   race.finishOrder = nums;
 
-  // 先檢查：所有即將中獎的投注，對應的馬券都要有賠率
   const winnersNeedingOdds = [];
   const pendingBets = state.bets.filter(b => b.raceId === raceId && b.result === "pending");
   pendingBets.forEach(bet => {
@@ -749,7 +766,6 @@ function autoSettleRace(raceId) {
     return;
   }
 
-  // 結算：依賠率計算回收
   pendingBets.forEach(bet => {
     const opt = race.options.find(o => o.type === bet.type && o.name === bet.optionName);
     if (!opt) return;
@@ -757,7 +773,7 @@ function autoSettleRace(raceId) {
     if (win) {
       bet.result = "win";
       bet.odds = opt.odds;
-      bet.winAmount = Math.round(bet.stake * bet.odds);
+      bet.winAmount = Math.round(bet.stake * opt.odds);
       state.points += bet.winAmount;
     } else {
       bet.result = "lose";
@@ -766,10 +782,6 @@ function autoSettleRace(raceId) {
     }
   });
   race.status = "settled";
-
-  // 清空該輸入框內容（雖然 renderAll 會重畫，但順手清一次）
-  input.value = "";
-
   saveState();
   renderAll();
   alert(t("settleDone"));
@@ -849,22 +861,18 @@ function renderRaceManagement() {
       : race.runners >= 5 ? t("placeRule2")
       : t("placeRule1");
 
-    const safeNameValue = race.name.replace(/"/g, "&quot;");
+    const dateLabel = t("labelDate");
+    const dateText = race.date || t("dateNotSet");
 
-    let html = `
-      <h3>${race.name}</h3>
-      <div class="flex-row" style="margin-bottom:4px;">
-        <label class="small">
-          ${t("raceNameLabel")}
-          <input type="text"
-                 value="${safeNameValue}"
-                 onchange="updateRaceName(${race.id}, this.value)">
-        </label>
-        <button class="danger" type="button" onclick="deleteRace(${race.id})">
-          ${t("btnDeleteRace")}
-        </button>
-      </div>
+    let html = `<h3>${race.name}</h3>
+      <p class="small">${dateLabel}：${dateText}</p>
       <div class="flex-row">
+        <label class="small">
+          ${t("labelDate")}：
+          <input type="date"
+            value="${race.date ? race.date : ""}"
+            onchange="updateRaceDate(${race.id}, this.value)">
+        </label>
         <label class="small">
           ${t("labelRunners")}：
           <input type="number" min="2" max="24"
@@ -920,7 +928,11 @@ function renderBetting() {
   openRaces.forEach(race => {
     const div = document.createElement("div");
     div.className = "card";
+    const dateLabel = t("labelDate");
+    const dateText = race.date || t("dateNotSet");
+
     let html = `<h3>${race.name}</h3>
+      <p class="small">${dateLabel}：${dateText}</p>
       <table>
         <thead>
           <tr>
@@ -970,8 +982,11 @@ function renderSettle() {
       race.runners >= 8 ? t("placeRule3")
       : race.runners >= 5 ? t("placeRule2")
       : t("placeRule1");
+    const dateLabel = t("labelDate");
+    const dateText = race.date || t("dateNotSet");
     div.innerHTML = `
       <h3>${race.name}</h3>
+      <p class="small">${dateLabel}：${dateText}</p>
       <p class="small">${t("labelRunners")}：${race.runners}　${t("labelPlaceRule")}：${placeRuleText}</p>
       <label class="small">
         ${t("finishOrderLabel")}
@@ -1002,7 +1017,8 @@ function renderHistory() {
     <thead>
       <tr>
         <th>ID</th>
-        <th>Race</th>
+        <th>${t("labelDate")}</th>
+        <th>賽事 / Race</th>
         <th>${t("labelType")}</th>
         <th>${t("labelName")}</th>
         <th class="right">${t("labelStake")}</th>
@@ -1022,9 +1038,11 @@ function renderHistory() {
     } else if (bet.result === "lose") {
       badge = `<span class="badge lose">${state.lang === "zh" ? "未中" : "Lose"}</span>`;
     }
+    const dateText = bet.raceDate || t("dateNotSet");
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${bet.id}</td>
+      <td>${dateText}</td>
       <td>${bet.raceName}</td>
       <td>${betTypeLabel(bet.type)} (${bet.type})</td>
       <td>${bet.optionName}</td>
@@ -1041,7 +1059,7 @@ function renderHistory() {
 /* ===== reset ===== */
 function resetAll() {
   if (!confirm(t("confirmReset"))) return;
-  state.points = 0;
+  state.points = 1000;   // 重設回 1000 點
   state.races = [];
   state.bets = [];
   saveState();
@@ -1061,11 +1079,10 @@ function renderAll() {
 
 /* ===== init ===== */
 loadState();
-// 初始化 lastBetId，避免重新整理後 ID 從 1 重新開始
-if (state.bets && state.bets.length > 0) {
-  lastBetId = Math.max.apply(null, state.bets.map(b => b.id || 0));
-}
 updateStaticTexts();
+if (typeof state.points !== "number" || isNaN(state.points)) {
+  state.points = 1000;
+}
 if (document.getElementById("optionsContainer").children.length === 0) {
   addOptionRow();
 }
@@ -1079,6 +1096,4 @@ document.getElementById("langToggle").onclick = () => {
 </script>
 
 </body>
-
 </html>
-
