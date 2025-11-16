@@ -260,7 +260,7 @@
     <input type="date" id="raceDateInput">
   </label>
 
-  <!-- 新增：競馬場 / 場地 / 場次 -->
+  <!-- 競馬場 / 場地 / 場次 -->
   <div class="flex-row">
     <label>
       <span id="racecourseLabelSpan">競馬場：</span>
@@ -407,9 +407,9 @@ state = {
       id: number,
       name: string,
       date: string|null,
-      racecourse: string|null,   // 競馬場代碼
+      racecourse: string|null,
       surface: "TURF" | "DIRT" | null,
-      raceNumber: number|null,   // 1~12
+      raceNumber: number|null,
       runners: number,
       status: "open" | "settled",
       finishOrder: number[] | null,
@@ -620,7 +620,6 @@ function betTypeLabel(code) {
   return state.lang === "zh" ? bt.zh : bt.en;
 }
 
-// 競馬場 / 場地 / 場次 標籤
 function racecourseLabel(code) {
   if (!code) return "";
   const rc = RACECOURSES.find(r => r.code === code);
@@ -704,7 +703,6 @@ function updateStaticTexts() {
   document.getElementById("surfaceLabelSpan").textContent = t("surfaceLabel");
   document.getElementById("raceNumberLabelSpan").textContent = t("raceNumberLabel");
 
-  // 首個「未選擇」選項文字多語系
   const rcSel = document.getElementById("racecourseSelect");
   if (rcSel && rcSel.options.length > 0) rcSel.options[0].textContent = t("racecourseNotSet");
   const surfSel = document.getElementById("surfaceSelect");
@@ -1035,7 +1033,11 @@ function autoSettleRace(raceId) {
       bet.winAmount = 0;
     }
   });
+
+  // 標記為已結算，並自動從賽事列表中刪除（不復原點數）
   race.status = "settled";
+  state.races = state.races.filter(r => r.id !== raceId);
+
   saveState();
   renderAll();
   alert(t("settleDone"));
