@@ -31,8 +31,8 @@ https://bext1998.github.io/umapyoi.html
 
 ---
 
-### 🎯 關於賽馬與投注的看法  
-### Perspective on Horse Racing & Betting
+### 🎯 關於賽馬與投注  
+### About Horse Racing & Betting
 
 本專案僅作為娛樂用途。賽馬文化包含血統、訓練、戰績分析、賽事氛圍等多種面向，**投注只是其中的一小部分**。  
 **小賭怡情無妨，但務必保持節制，避免過度投入或影響日常生活與財務狀況。**
