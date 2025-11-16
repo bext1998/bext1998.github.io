@@ -1,7 +1,13 @@
 # 創世駒的賭博啟示錄 Chrono Genesis Betting Chronicle
+---
 ### 你的個人賽馬預測與下注模擬器  
 ### Your personal horse racing prediction & betting simulator
+---
 
+<img src="image/136439033_p0.jpg" width="20%">
+作者Pixiv: https://www.pixiv.net/users/92692946
+
+---
 🔗 **網站連結 / Website Link:**  
 https://bext1998.github.io/umapyoi.html
 
