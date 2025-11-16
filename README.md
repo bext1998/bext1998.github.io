@@ -11,6 +11,37 @@ https://bext1998.github.io/umapyoi.html
 
 ---
 
+### 📌 附註 Notes
+
+為了更完整體驗模擬器遊戲流程，可參考以下資訊來源：
+
+- 🎥 **JRA 官方直播（需視區域而定，可能需要 VPN）**  
+  https://www.jra.go.jp/
+
+- 📘 **Netkeiba 英文版資訊**  
+  https://en.netkeiba.com/
+
+To enhance your simulation experience, you may refer to:
+
+- 🎥 **Official JRA Live Broadcast** (VPN may be required depending on region)  
+  https://www.jra.go.jp/
+
+- 📘 **Netkeiba English Version**  
+  https://en.netkeiba.com/
+
+---
+
+### ⚠️ 警告說明 Warning
+
+本網站僅作為 **娛樂性模擬** 工具，所有預測、賠率與下注內容皆為虛構生成，  
+**不具任何現實賭博性質，也不鼓勵真實投注行為**。
+
+This website is an **entertainment-only simulation tool**.  
+All predictions, odds, and betting mechanics are fictional.  
+**No real gambling is involved, and real-money betting is not encouraged.**
+
+---
+
 This static website was collaboratively generated and refined through ChatGPT 5.1, and is deployed using GitHub Pages as a lightweight horse racing prediction and betting simulator.
 
 All source code, including HTML, CSS, and JavaScript, is fully available in this repository. You are welcome to **fork**, study, modify, or adapt the code for any personal projects, experiments, or learning purposes.
