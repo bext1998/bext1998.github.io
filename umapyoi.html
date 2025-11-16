@@ -1034,7 +1034,7 @@ function autoSettleRace(raceId) {
     }
   });
 
-  // 標記為已結算，並自動從賽事列表中刪除（不復原點數）
+  // 結算後從賽事列表移除
   race.status = "settled";
   state.races = state.races.filter(r => r.id !== raceId);
 
@@ -1235,7 +1235,7 @@ function renderRaceManagement() {
   });
 }
 
-/* ===== 渲染下注區 ===== */
+/* ===== 渲染下注區（Stake 欄位顯示加總下注點數） ===== */
 function renderBetting() {
   const container = document.getElementById("bettingContainer");
   const msg = document.getElementById("noBettingMsg");
@@ -1246,6 +1246,7 @@ function renderBetting() {
     return;
   }
   msg.textContent = "";
+
   openRaces.forEach(race => {
     const div = document.createElement("div");
     div.className = "card";
@@ -1254,6 +1255,15 @@ function renderBetting() {
     const courseText = race.racecourse ? racecourseLabel(race.racecourse) : t("racecourseNotSet");
     const surfaceText = race.surface ? surfaceLabel(race.surface) : t("surfaceNotSet");
     const numberText = race.raceNumber ? raceNumberText(race.raceNumber) : t("raceNumberNotSet");
+
+    // 計算此賽事每一個「券種＋馬號」的總下注點數
+    const stakeMap = {};
+    state.bets
+      .filter(b => b.raceId === race.id)
+      .forEach(b => {
+        const key = b.type + "|" + b.optionName;
+        stakeMap[key] = (stakeMap[key] || 0) + b.stake;
+      });
 
     let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
@@ -1274,12 +1284,16 @@ function renderBetting() {
           <tbody>
     `;
     race.options.forEach((opt, idx) => {
+      const key = opt.type + "|" + opt.name;
+      const stakeSum = stakeMap[key] || 0;
+      const stakeDisplay = stakeSum > 0 ? stakeSum : "-";
+
       html += `
         <tr>
           <td>${betTypeLabel(opt.type)} (${opt.type})</td>
           <td>${opt.name}</td>
           <td class="right">${opt.odds != null ? opt.odds : "-"}</td>
-          <td class="right">──</td>
+          <td class="right">${stakeDisplay}</td>
           <td><button class="primary" type="button"
             onclick="placeBet(${race.id}, ${idx})">${t("btnBet")}</button></td>
         </tr>
