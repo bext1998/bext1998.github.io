@@ -1,223 +1,235 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
- <link rel="shortcut icon" type="image/x-icon" href="favicon.png?">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chrono Genesis Betting Chronicle</title>
- <style>
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 16px;
-    line-height: 1.6;
-    background: #f3f5f7;
-    color: #222;
-  }
-  h1, h2, h3 {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-  }
-  .small { font-size: 12px; color: #555; }
-  .card {
-    background: #ffffff;
-    border-radius: 6px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-  .section-title {
-    border-left: 4px solid #007c3e; /* JRA 綠 */
-    padding-left: 8px;
-    margin-bottom: 8px;
-  }
-  .section-title h2 { margin: 0; }
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.png?">
 
-  input[type="text"], input[type="number"], input[type="date"], select, textarea {
-    padding: 5px 7px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    margin: 2px 0 6px 0;
-  }
-  input[type="number"] { width: 120px; }
-
-  button {
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 2px 6px 2px 0;
-  }
-  button.primary { background: #007c3e; color: #fff; }
-  button.secondary { background: #e0e0e0; color: #222; }
-  button.danger { background: #c62828; color: #fff; }
-
-  .flex-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-  .option-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .lang-toggle {
-    position: fixed;
-    right: 12px;
-    top: 12px;
-    z-index: 10;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 13px;
-    margin-top: 6px;
-  }
-  th, td {
-    border: 1px solid #ddd;
-    padding: 4px 6px;
-    text-align: left;
-  }
-  th {
-    background: #f3f3f3;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 11px;
-    margin-left: 4px;
-  }
-  .badge.win { background: #c8e6c9; color: #1b5e20; }
-  .badge.lose { background: #ffcdd2; color: #b71c1c; }
-  .badge.pending { background: #fff9c4; color: #8d6e63; }
-
-  .right { text-align: right; }
-
-  /* 表格外層容器：手機版用來橫向捲動 */
-  .table-scroll {
-    width: 100%;
-  }
-
-  .navbar {
-    background: #ffffff;
-    border-radius: 6px;
-    padding: 8px 16px;
-    margin: 8px 0 16px 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    display: flex;
-    justify-content: flex-end;
-  }
-  .navbar a { text-decoration: none; }
-
-  /* ===== 手機版：螢幕寬度 ≤ 720px ===== */
-  @media (max-width: 720px) {
+  <style>
     body {
-      padding: 8px;
-      max-width: 100%;
-      font-size: 15px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+      line-height: 1.6;
+      background: #f3f5f7;
+      color: #222;
     }
-
-    h1 {
-      font-size: 22px;
-      line-height: 1.3;
+    h1, h2, h3 {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
     }
-    h2 { font-size: 18px; }
-    h3 { font-size: 16px; }
-
+    .small { font-size: 12px; color: #555; }
     .card {
-      padding: 10px 12px;
-      margin-bottom: 12px;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-
-    .flex-row {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
+    .section-title {
+      border-left: 4px solid #007c3e; /* JRA 綠 */
+      padding-left: 8px;
+      margin-bottom: 8px;
     }
-
-    .option-row {
-      flex-direction: column;
-      align-items: stretch;
-    }
+    .section-title h2 { margin: 0; }
 
     input[type="text"],
     input[type="number"],
     input[type="date"],
     select,
     textarea {
-      width: 100%;
-      max-width: 100%;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    input[type="number"] {
-      width: 100%; /* 下注點數、頭數等在手機上都容易點到 */
-    }
-
-    button.primary,
-    button.secondary {
-      width: 100%;
-      margin-right: 0;
-      margin-bottom: 6px;
-      font-size: 16px;
-      padding: 10px 14px;
-    }
-
-    /* 券種行裡的小 X 按鈕維持小顆，不要滿版 */
-    .option-row button.danger {
-      width: auto;
-      padding: 4px 8px;
+      padding: 5px 7px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
       font-size: 14px;
-      align-self: flex-start;
+      margin: 2px 0 6px 0;
+    }
+    input[type="number"] { width: 120px; }
+
+    button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 2px 6px 2px 0;
+    }
+    button.primary { background: #007c3e; color: #fff; }
+    button.secondary { background: #e0e0e0; color: #222; }
+    button.danger { background: #c62828; color: #fff; }
+
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .option-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
     }
 
+    /* 導覽列與語言切換 */
     .navbar {
-      justify-content: center;
-      padding: 6px 8px;
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 8px 16px;
+      margin: 8px 0 16px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
-
+    .navbar a { text-decoration: none; }
+    .navbar button {
+      width: auto;
+      margin-bottom: 0;
+    }
     .lang-toggle {
-      top: 8px;
-      right: 8px;
+      /* 放在導覽列左邊用的 */
+      margin-right: auto;
     }
 
     table {
-      font-size: 12px;
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    th {
+      background: #f3f3f3;
     }
 
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .badge.win { background: #c8e6c9; color: #1b5e20; }
+    .badge.lose { background: #ffcdd2; color: #b71c1c; }
+    .badge.pending { background: #fff9c4; color: #8d6e63; }
+
+    .right { text-align: right; }
+
+    /* 表格外層容器：手機版用來橫向捲動 */
     .table-scroll {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      width: 100%;
     }
 
-    .table-scroll table {
-      min-width: 640px; /* 表格太擠改成用橫向捲動，而不是把字縮到看不清楚 */
+    /* ===== 手機版：螢幕寬度 ≤ 720px ===== */
+    @media (max-width: 720px) {
+      body {
+        padding: 8px;
+        max-width: 100%;
+        font-size: 15px;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.3;
+      }
+      h2 { font-size: 18px; }
+      h3 { font-size: 16px; }
+
+      .card {
+        padding: 10px 12px;
+        margin-bottom: 12px;
+      }
+
+      .flex-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .option-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        max-width: 100%;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+
+      input[type="number"] {
+        width: 100%;
+      }
+
+      button.primary,
+      button.secondary {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 6px;
+        font-size: 16px;
+        padding: 10px 14px;
+      }
+
+      /* 券種行裡的小 X 按鈕維持小顆 */
+      .option-row button.danger {
+        width: auto;
+        padding: 4px 8px;
+        font-size: 14px;
+        align-self: flex-start;
+      }
+
+      .navbar {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding: 6px 10px;
+      }
+
+      /* 導覽列的按鈕不要滿版 */
+      .navbar button {
+        width: auto;
+        font-size: 14px;
+        padding: 6px 10px;
+        margin-bottom: 0;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table-scroll table {
+        min-width: 640px;
+      }
     }
-  }
-</style>
+  </style>
 </head>
 <body>
-
-<button id="langToggle" class="primary lang-toggle" type="button">中文 / EN</button>
 
 <h1 id="mainTitleZh">創世駒的賭馬啟示錄</h1>
 <h1 id="mainTitleEn" style="display:none;">Chrono Genesis Betting Chronicle</h1>
 <p id="sloganZh" class="small">你的個人賽馬預測與下注模擬器</p>
 <p id="sloganEn" class="small" style="display:none;">Your personal horse racing prediction &amp; betting simulator</p>
 
-<!-- Navigation bar：只留 PDF 按鈕 -->
+<!-- 導覽列：左邊語言切換，右邊 PDF -->
 <div class="navbar">
+  <button id="langToggle" class="primary lang-toggle" type="button">中文 / EN</button>
   <a href="https://github.com/bext1998/bext1998.github.io/blob/main/how_to_bet_en.pdf" target="_blank" rel="noopener">
     <button class="secondary" type="button" id="howToBetBtn">如何下注說明（PDF）</button>
   </a>
@@ -296,7 +308,7 @@
   <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立比賽</button>
 </div>
 
-<!-- 賽事管理區：修改賽事日期 / 頭數 / 賠率 -->
+<!-- 賽事管理區 -->
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
@@ -348,7 +360,7 @@ state = {
     {
       id: number,
       name: string,
-      date: string|null,     // 新增：賽事日期 YYYY-MM-DD
+      date: string|null,
       runners: number,
       status: "open" | "settled",
       finishOrder: number[] | null,
@@ -367,7 +379,7 @@ const STORAGE_KEY = "CG_Betting_V7";
 
 let state = {
   lang: "zh",
-  points: 1000,   // 初始 1000 點
+  points: 1000,
   races: [],
   bets: []
 };
@@ -634,7 +646,7 @@ function addOptionRow(prefType = "", prefName = "") {
 /* ===== BOX 展開 ===== */
 function expandBox() {
   const raw = document.getElementById("boxNumbersInput").value;
-  const mode = document.getElementById("boxModeSelect").value; // QUINELLA / TRIO / TRIFECTA
+  const mode = document.getElementById("boxModeSelect").value;
   const nums = (raw.match(/\d+/g) || []).map(s => String(parseInt(s,10)));
   if (nums.length === 0) {
     alert(state.lang === "zh"
@@ -709,7 +721,7 @@ function createRace() {
   renderAll();
 }
 
-/* ===== Race 管理：修改日期 / 頭數 / 賠率 ===== */
+/* ===== Race 管理 ===== */
 function updateRaceRunners(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
@@ -779,7 +791,7 @@ function placePayPositions(runners) {
   return 1;
 }
 
-/* ===== 判斷單一投注是否中獎 ===== */
+/* ===== 判斷是否中獎 ===== */
 function parseNumbersFromName(name) {
   return name.split(/[^0-9]+/).filter(s => s !== "").map(s => parseInt(s,10));
 }
@@ -935,11 +947,11 @@ function renderHitStats() {
     `;
     tbody.appendChild(tr);
   });
-  
+
   const wrapper = document.createElement("div");
   wrapper.className = "table-scroll";
   wrapper.appendChild(table);
-  container.appendChild(table);
+  container.appendChild(wrapper);
 }
 
 /* ===== 渲染 Race 管理 ===== */
@@ -962,7 +974,10 @@ function renderRaceManagement() {
       : race.runners >= 5 ? t("placeRule2")
       : t("placeRule1");
 
-let html = `<h3>${race.name}</h3>
+    const dateLabel = t("labelDate");
+    const dateText = race.date || t("dateNotSet");
+
+    let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
       <div class="flex-row">
         <label class="small">
@@ -1009,7 +1024,6 @@ let html = `<h3>${race.name}</h3>
         </table>
       </div>
     `;
-    html += `</tbody></table>`;
     if (race.finishOrder && race.finishOrder.length > 0) {
       html += `<p class="small">已紀錄賽果：${race.finishOrder.join(" - ")}</p>`;
     }
@@ -1035,7 +1049,7 @@ function renderBetting() {
     const dateLabel = t("labelDate");
     const dateText = race.date || t("dateNotSet");
 
-        let html = `<h3>${race.name}</h3>
+    let html = `<h3>${race.name}</h3>
       <p class="small">${dateLabel}：${dateText}</p>
       <div class="table-scroll">
         <table>
@@ -1067,6 +1081,10 @@ function renderBetting() {
         </table>
       </div>
     `;
+    div.innerHTML = html;
+    container.appendChild(div);
+  });
+}
 
 /* ===== 渲染結算區 ===== */
 function renderSettle() {
@@ -1117,7 +1135,7 @@ function renderHistory() {
     container.appendChild(p);
     return;
   }
-    const table = document.createElement("table");
+  const table = document.createElement("table");
   table.innerHTML = `
     <thead>
       <tr>
@@ -1168,7 +1186,7 @@ function renderHistory() {
 /* ===== reset ===== */
 function resetAll() {
   if (!confirm(t("confirmReset"))) return;
-  state.points = 1000;   // 重設回 1000 點
+  state.points = 1000;
   state.races = [];
   state.bets = [];
   saveState();
@@ -1188,6 +1206,12 @@ function renderAll() {
 
 /* ===== init ===== */
 loadState();
+
+/* 把 lastBetId 調成現有 bets 的最大值，避免重複 ID */
+if (Array.isArray(state.bets) && state.bets.length > 0) {
+  lastBetId = Math.max(...state.bets.map(b => b.id || 0));
+}
+
 updateStaticTexts();
 if (typeof state.points !== "number" || isNaN(state.points)) {
   state.points = 1000;
@@ -1197,6 +1221,7 @@ if (document.getElementById("optionsContainer").children.length === 0) {
 }
 renderAll();
 
+/* 語言切換 */
 document.getElementById("langToggle").onclick = () => {
   state.lang = state.lang === "zh" ? "en" : "zh";
   saveState();
@@ -1205,6 +1230,4 @@ document.getElementById("langToggle").onclick = () => {
 </script>
 
 </body>
-
 </html>
-
