@@ -141,7 +141,7 @@
   </div>
 
   <p id="optionsIntro" class="small">
-    一個選項 = 一張馬券。種類請選擇 JRA 券種，賽馬背號/PP 用半形數字以 <code>-</code> 連接（例：13、6-7、6-7-13）。
+    一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。
   </p>
 
   <!-- BOX 展開工具 -->
@@ -176,11 +176,11 @@
   <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立 Race</button>
 </div>
 
-<!-- 賽事管理區：修改賽事名稱 / 頭數 / 賠率 / 刪除 -->
+<!-- 賽事管理區：修改賽事名稱 / 出賽頭數 / 賠率 / 刪除賽事 -->
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
-    在這裡可以修改已建立 Race 的出賽頭數、賽事名稱與各券種的賠率。下注區只能查看賠率，無法修改。
+    在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。
   </p>
   <div id="raceManageContainer"></div>
   <p class="small" id="noRaceManageMsg"></p>
@@ -231,7 +231,9 @@ state = {
       runners: number,
       status: "open" | "settled",
       finishOrder: number[] | null,
-      options: [ { type, name, odds } ]
+      options: [
+        { type, name, odds }
+      ]
     }
   ],
   bets: [
@@ -279,7 +281,7 @@ const I18N = {
     addOptionBtn: "新增馬券選項",
     createRaceBtn: "建立 Race",
     raceManageTitle: "賽事管理區（出賽頭數 / 賠率）",
-    raceManageHint: "在這裡可以修改已建立 Race 的出賽頭數、賽事名稱與各券種的賠率。下注區只能查看賠率，無法修改。",
+    raceManageHint: "在這裡可以修改已建立 Race 的賽事名稱、出賽頭數與各券種的賠率。下注區只能查看賠率，無法修改。",
     noRaceManageMsg: "目前尚未建立任何 Race。",
     bettingTitle: "進行下注（Points Betting）",
     bettingHint: "選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。",
@@ -322,10 +324,7 @@ const I18N = {
     placeRule2: "複勝：1–2 著內",
     placeRule3: "複勝：1–3 著內",
     placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）",
-    renameRaceBtn: "更名",
-    renameRacePrompt: "請輸入新的 Race 名稱：",
-    deleteRaceBtn: "刪除此 Race",
-    confirmDeleteRace: "確定要刪除此 Race 嗎？相關下注紀錄也會被刪除，點數將會回復到刪除前未參與此 Race 的狀態。"
+    btnDeleteRace: "刪除這個 Race（不退點數）"
   },
   en: {
     pointsSectionTitle: "Points & Hit Rates",
@@ -344,7 +343,7 @@ const I18N = {
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
-    raceManageHint: "Edit runners, race name and odds for each Race here. Odds cannot be edited in the betting area.",
+    raceManageHint: "Edit race name, runners and odds for each Race here. Odds cannot be edited in the betting area.",
     noRaceManageMsg: "No races created yet.",
     bettingTitle: "Place Bets (Points)",
     bettingHint: "Choose a ticket and enter stake. Set / change odds only in Race Management above.",
@@ -387,10 +386,7 @@ const I18N = {
     placeRule2: "PLACE: 1st–2nd",
     placeRule3: "PLACE: 1st–3rd",
     placeRule1: "PLACE: 1st only (in practice PLACE often not sold with ≤4 runners)",
-    renameRaceBtn: "Rename",
-    renameRacePrompt: "Enter new Race name:",
-    deleteRaceBtn: "Delete this Race",
-    confirmDeleteRace: "Delete this Race? All related bets will be removed and points will be reverted as if this Race was never played."
+    btnDeleteRace: "Delete this Race (no refund)"
   }
 };
 
@@ -580,7 +576,7 @@ function createRace() {
   renderAll();
 }
 
-/* ===== Race 管理：修改頭數 / 賠率 / 更名 / 刪除 ===== */
+/* ===== Race 管理：修改頭數 / 賠率 / 賽事名稱 / 刪除 ===== */
 function updateRaceRunners(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
@@ -601,48 +597,27 @@ function updateRaceOdds(raceId, index, value) {
   saveState();
   renderAll();
 }
-
-function renameRace(raceId) {
+function updateRaceName(raceId, value) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
-  const current = race.name;
-  const newName = prompt(t("renameRacePrompt"), current);
-  if (newName === null) return;
-  const trimmed = newName.trim();
-  if (!trimmed) return;
-  race.name = trimmed;
-  // 更新下注紀錄上的 raceName
+  const newName = value.trim();
+  if (!newName) return;
+  race.name = newName;
+  // 同步更新下注紀錄中顯示的 Race 名稱
   state.bets.forEach(b => {
-    if (b.raceId === raceId) b.raceName = trimmed;
+    if (b.raceId === raceId) b.raceName = newName;
   });
   saveState();
   renderAll();
 }
-
-/* 刪除 Race：連同下注紀錄，同時還原點數 */
 function deleteRace(raceId) {
   const race = state.races.find(r => r.id === raceId);
   if (!race) return;
-  if (!confirm(t("confirmDeleteRace"))) return;
-
-  const remainingBets = [];
-  state.bets.forEach(b => {
-    if (b.raceId === raceId) {
-      // 還原點數：撤銷下注與中獎
-      // 原本：points = points - stake（下注） + winAmount（若中獎）
-      // 還原：points = points - winAmount + stake
-      if (b.result === "win") {
-        state.points -= (b.winAmount || 0);
-        state.points += b.stake;
-      } else {
-        // lose 或 pending：只需要把 stake 加回去
-        state.points += b.stake;
-      }
-    } else {
-      remainingBets.push(b);
-    }
-  });
-  state.bets = remainingBets;
+  const msg = state.lang === "zh"
+    ? `確定要刪除「${race.name}」這個 Race 嗎？已下注的點數不會退回，相關下注紀錄會保留。`
+    : `Delete Race "${race.name}"? Stakes already placed will NOT be refunded, and bet history will remain.`;
+  if (!confirm(msg)) return;
+  // 只刪除賽事本身，不動點數與既有下注紀錄
   state.races = state.races.filter(r => r.id !== raceId);
   saveState();
   renderAll();
@@ -781,7 +756,7 @@ function autoSettleRace(raceId) {
     if (win) {
       bet.result = "win";
       bet.odds = opt.odds;
-      bet.winAmount = Math.round(bet.stake * opt.odds);
+      bet.winAmount = Math.round(bet.stake * bet.odds);
       state.points += bet.winAmount;
     } else {
       bet.result = "lose";
@@ -790,8 +765,12 @@ function autoSettleRace(raceId) {
     }
   });
   race.status = "settled";
+
+  // 清空該輸入框內容（雖然 renderAll 會重畫，但順手清一次）
+  input.value = "";
+
   saveState();
-  renderAll(); // 重新渲染：已結算 Race 會自動從結算區消失
+  renderAll();
   alert(t("settleDone"));
 }
 
@@ -869,13 +848,20 @@ function renderRaceManagement() {
       : race.runners >= 5 ? t("placeRule2")
       : t("placeRule1");
 
+    const safeNameValue = race.name.replace(/"/g, "&quot;");
+
     let html = `
-      <div class="flex-row" style="justify-content: space-between; align-items: center;">
-        <div><h3 style="margin:0;">${race.name}</h3></div>
-        <div>
-          <button class="secondary" type="button" onclick="renameRace(${race.id})">${t("renameRaceBtn")}</button>
-          <button class="danger" type="button" onclick="deleteRace(${race.id})">${t("deleteRaceBtn")}</button>
-        </div>
+      <h3>${race.name}</h3>
+      <div class="flex-row" style="margin-bottom:4px;">
+        <label class="small">
+          ${t("raceNameLabel")}
+          <input type="text"
+                 value="${safeNameValue}"
+                 onchange="updateRaceName(${race.id}, this.value)">
+        </label>
+        <button class="danger" type="button" onclick="deleteRace(${race.id})">
+          ${t("btnDeleteRace")}
+        </button>
       </div>
       <div class="flex-row">
         <label class="small">
@@ -1074,6 +1060,10 @@ function renderAll() {
 
 /* ===== init ===== */
 loadState();
+// 初始化 lastBetId，避免重新整理後 ID 從 1 重新開始
+if (state.bets && state.bets.length > 0) {
+  lastBetId = Math.max.apply(null, state.bets.map(b => b.id || 0));
+}
 updateStaticTexts();
 if (document.getElementById("optionsContainer").children.length === 0) {
   addOptionRow();
