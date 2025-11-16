@@ -358,7 +358,7 @@
 <div class="card">
   <div class="section-title"><h2 id="raceManageTitle">賽事管理區（出賽頭數 / 賠率）</h2></div>
   <p class="small" id="raceManageHint">
-    在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率。下注區只能查看賠率，無法修改。
+    在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率，並可直接追加馬券選項。下注區只能查看賠率，無法修改。
   </p>
   <div id="raceManageContainer"></div>
   <p class="small" id="noRaceManageMsg"></p>
@@ -424,7 +424,7 @@ state = {
 }
 ============================== */
 
-const STORAGE_KEY = "CG_Betting_V8";
+const STORAGE_KEY = "CG_Betting_V9";
 
 let state = {
   lang: "zh",
@@ -478,7 +478,7 @@ const I18N = {
     addOptionBtn: "新增馬券選項",
     createRaceBtn: "建立比賽",
     raceManageTitle: "賽事管理區（出賽頭數 / 賠率）",
-    raceManageHint: "在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率。下注區只能查看賠率，無法修改。",
+    raceManageHint: "在這裡可以修改已建立賽事的賽事日期、出賽頭數、競馬場 / 場地 / 場次與各券種的賠率，並可直接追加馬券選項。下注區只能查看賠率，無法修改。",
     noRaceManageMsg: "目前尚未建立任何賽事。",
     bettingTitle: "進行下注",
     bettingHint: "選擇欲下注的券種，輸入點數即可。賠率請於上方「賽事管理區」設定 / 修改。",
@@ -532,7 +532,10 @@ const I18N = {
     raceNumberShort: "場次",
     racecourseNotSet: "未選擇",
     surfaceNotSet: "未選擇",
-    raceNumberNotSet: "未選擇"
+    raceNumberNotSet: "未選擇",
+    selectBetTypePlaceholder: "選擇券種",
+    inlineAddOptionTitle: "追加馬券選項（會直接加入此賽事的馬券列表）",
+    inlineAddOptionBtn: "加入"
   },
   en: {
     pointsSectionTitle: "Points & Hit Rates",
@@ -552,7 +555,7 @@ const I18N = {
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
-    raceManageHint: "Edit race date, runners, racecourse / surface / race number and odds for each race here. Odds cannot be edited in the betting area.",
+    raceManageHint: "Edit race date, runners, racecourse / surface / race number and odds for each race here, and append more ticket options. Odds cannot be edited in the betting area.",
     noRaceManageMsg: "No races created yet.",
     bettingTitle: "Place Bets",
     bettingHint: "Choose a ticket and enter stake. Set / change odds only in Race Management above.",
@@ -606,7 +609,10 @@ const I18N = {
     raceNumberShort: "Race No.",
     racecourseNotSet: "Not set",
     surfaceNotSet: "Not set",
-    raceNumberNotSet: "Not set"
+    raceNumberNotSet: "Not set",
+    selectBetTypePlaceholder: "Select bet type",
+    inlineAddOptionTitle: "Add ticket options (will be appended to this race)",
+    inlineAddOptionBtn: "Add"
   }
 };
 
@@ -634,6 +640,12 @@ function surfaceLabel(code) {
 function raceNumberText(num) {
   if (!num && num !== 0) return "";
   return num + "R";
+}
+
+function horseNamePlaceholder() {
+  return state.lang === "zh"
+    ? "賽馬背號 / PP（例：13、6-7、6-7-13）"
+    : "Horse No. / PP (e.g. 13, 6-7, 6-7-13)";
 }
 
 /* ===== 儲存 / 載入 ===== */
@@ -721,7 +733,7 @@ function addOptionRow(prefType = "", prefName = "") {
   typeSelect.className = "opt-type";
   const defaultOpt = document.createElement("option");
   defaultOpt.value = "";
-  defaultOpt.textContent = state.lang === "zh" ? "選擇券種" : "Select bet type";
+  defaultOpt.textContent = t("selectBetTypePlaceholder");
   typeSelect.appendChild(defaultOpt);
   BET_TYPES.forEach(bt => {
     const opt = document.createElement("option");
@@ -734,9 +746,7 @@ function addOptionRow(prefType = "", prefName = "") {
   const nameInput = document.createElement("input");
   nameInput.type = "text";
   nameInput.className = "opt-name";
-  nameInput.placeholder = state.lang === "zh"
-    ? "賽馬背號 / PP（例：13、6-7、6-7-13）"
-    : "Horse No. / PP (e.g. 13, 6-7, 6-7-13)";
+  nameInput.placeholder = horseNamePlaceholder();
   if (prefName) nameInput.value = prefName;
 
   const removeBtn = document.createElement("button");
@@ -786,7 +796,7 @@ function expandBox() {
     : `Generated ${combos.length} combinations and added as options.`));
 }
 
-/* ===== 建立賽事 ===== */
+/* ===== 建立賽事（同一場會合併馬券） ===== */
 function createRace() {
   const name = document.getElementById("raceNameInput").value.trim();
   if (!name) { alert(t("raceNameMissing")); return; }
@@ -814,19 +824,39 @@ function createRace() {
     options.push({ type, name: nameStr, odds: null });
   }
 
-  const race = {
-    id: Date.now(),
-    name,
-    date: dateStr,
-    racecourse: racecourseCode,
-    surface: surfaceCode,
-    raceNumber: raceNumberVal,
-    runners,
-    status: "open",
-    finishOrder: null,
-    options
-  };
-  state.races.push(race);
+  // 找看看是否已存在同一場賽事（名稱 + 日期 + 場地資訊完全一致）
+  const existing = state.races.find(r =>
+    r.name === name &&
+    (r.date || null) === dateStr &&
+    (r.racecourse || null) === racecourseCode &&
+    (r.surface || null) === surfaceCode &&
+    (r.raceNumber || null) === (raceNumberVal == null ? null : raceNumberVal)
+  );
+
+  if (existing) {
+    // 合併：更新資訊並追加馬券
+    existing.runners = runners;
+    existing.date = dateStr;
+    existing.racecourse = racecourseCode;
+    existing.surface = surfaceCode;
+    existing.raceNumber = raceNumberVal;
+    existing.options.push(...options);
+  } else {
+    // 新增一場新賽事
+    const race = {
+      id: Date.now(),
+      name,
+      date: dateStr,
+      racecourse: racecourseCode,
+      surface: surfaceCode,
+      raceNumber: raceNumberVal,
+      runners,
+      status: "open",
+      finishOrder: null,
+      options
+    };
+    state.races.push(race);
+  }
 
   document.getElementById("raceNameInput").value = "";
   document.getElementById("raceDateInput").value = "";
@@ -886,6 +916,26 @@ function updateRaceNumber(raceId, value) {
   if (!race) return;
   const n = value ? parseInt(value, 10) : null;
   race.raceNumber = isNaN(n) ? null : n;
+  saveState();
+  renderAll();
+}
+
+/* ===== 追加馬券到既有賽事 ===== */
+function addOptionToRace(raceId) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return;
+  const typeEl = document.getElementById(`inlineType-${raceId}`);
+  const nameEl = document.getElementById(`inlineName-${raceId}`);
+  if (!typeEl || !nameEl) return;
+  const type = typeEl.value.trim();
+  const name = nameEl.value.trim();
+  if (!type || !name) {
+    alert(t("optionIncomplete"));
+    return;
+  }
+  race.options.push({ type, name, odds: null });
+  typeEl.value = "";
+  nameEl.value = "";
   saveState();
   renderAll();
 }
@@ -1034,7 +1084,7 @@ function autoSettleRace(raceId) {
     }
   });
 
-  // 結算後從賽事列表移除
+  // 結算後從賽事列表移除（已扣除點數不復原）
   race.status = "settled";
   state.races = state.races.filter(r => r.id !== raceId);
 
@@ -1132,6 +1182,15 @@ function raceNumberOptionsHtml(selected) {
   }
   return s;
 }
+function betTypeOptionsHtml(selected) {
+  const cur = selected || "";
+  let s = `<option value="">${t("selectBetTypePlaceholder")}</option>`;
+  BET_TYPES.forEach(bt => {
+    const sel = bt.code === cur ? " selected" : "";
+    s += `<option value="${bt.code}"${sel}>${betTypeLabel(bt.code)} (${bt.code})</option>`;
+  });
+  return s;
+}
 
 /* ===== 渲染 Race 管理 ===== */
 function renderRaceManagement() {
@@ -1225,6 +1284,21 @@ function renderRaceManagement() {
     html += `
           </tbody>
         </table>
+      </div>
+      <div class="small" style="margin-top:6px;">${t("inlineAddOptionTitle")}</div>
+      <div class="flex-row small">
+        <label>
+          ${t("labelType")}：
+          <select id="inlineType-${race.id}">
+            ${betTypeOptionsHtml("")}
+          </select>
+        </label>
+        <label>
+          ${t("labelName")}：
+          <input type="text" id="inlineName-${race.id}" placeholder="${horseNamePlaceholder()}">
+        </label>
+        <button class="secondary" type="button"
+          onclick="addOptionToRace(${race.id})">${t("inlineAddOptionBtn")}</button>
       </div>
     `;
     if (race.finishOrder && race.finishOrder.length > 0) {
