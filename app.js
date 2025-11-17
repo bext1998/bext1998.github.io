@@ -41,7 +41,8 @@ const BET_TYPES = [
   { code: "EXACTA",    zh: "馬單",   en: "Exacta" },
   { code: "WIDE",      zh: "ワイド", en: "Wide" },
   { code: "TRIO",      zh: "三連複", en: "Trio" },
-  { code: "TRIFECTA",  zh: "三連單", en: "Trifecta" }
+  { code: "TRIFECTA",  zh: "三連單", en: "Trifecta" },
+  { code: "BRACKET",   zh: "枠連",   en: "Bracket Quinella" }
 ];
 
 // JRA 競馬場
@@ -364,7 +365,7 @@ function addOptionRow(prefType = "", prefName = "") {
 /* ===== BOX 展開 ===== */
 function expandBox() {
   const raw = document.getElementById("boxNumbersInput").value;
-  const mode = document.getElementById("boxModeSelect").value;
+  const mode = document.getElementById("boxModeSelect").value; // QUINELLA / TRIO / TRIFECTA
   const nums = (raw.match(/\d+/g) || []).map(s => String(parseInt(s,10)));
   if (nums.length === 0) {
     alert(state.lang === "zh"
@@ -373,28 +374,171 @@ function expandBox() {
     return;
   }
   const uniq = Array.from(new Set(nums)).sort((a,b) => parseInt(a) - parseInt(b));
-  const k = (mode === "QUINELLA") ? 2 : 3;
-  if (uniq.length < k) {
-    alert(state.lang === "zh"
-      ? "賽馬背號數量不足，無法展開 BOX。"
-      : "Not enough numbers to expand BOX.");
+
+  if (mode === "QUINELLA") {
+    // C(n,2) 組合
+    if (uniq.length < 2) {
+      alert(state.lang === "zh"
+        ? "賽馬背號數量不足，無法展開馬連 BOX。"
+        : "Not enough numbers for Quinella BOX.");
+      return;
+    }
+    const combos = [];
+    for (let i = 0; i < uniq.length; i++) {
+      for (let j = i+1; j < uniq.length; j++) {
+        combos.push([uniq[i], uniq[j]]);
+      }
+    }
+    combos.forEach(c => addOptionRow("QUINELLA", c.join("-")));
+    alert(
+      (state.lang === "zh"
+        ? `已產生 ${combos.length} 組馬連 BOX 並加入下方馬券選項。`
+        : `Generated ${combos.length} Quinella BOX combinations and added as options.`)
+    );
     return;
   }
-  const combos = [];
-  function helper(start, path) {
-    if (path.length === k) { combos.push(path.slice()); return; }
-    for (let i = start; i < uniq.length; i++) {
-      path.push(uniq[i]);
-      helper(i+1, path);
-      path.pop();
+
+  if (mode === "TRIO") {
+    // C(n,3) 組合（對 TRIO 來說一組就是全部排列）
+    if (uniq.length < 3) {
+      alert(state.lang === "zh"
+        ? "賽馬背號數量不足，無法展開三連複 BOX。"
+        : "Not enough numbers for Trio BOX.");
+      return;
     }
+    const combos = [];
+    for (let i = 0; i < uniq.length; i++) {
+      for (let j = i+1; j < uniq.length; j++) {
+        for (let k = j+1; k < uniq.length; k++) {
+          combos.push([uniq[i], uniq[j], uniq[k]]);
+        }
+      }
+    }
+    combos.forEach(c => addOptionRow("TRIO", c.join("-")));
+    alert(
+      (state.lang === "zh"
+        ? `已產生 ${combos.length} 組三連複 BOX 並加入下方馬券選項。`
+        : `Generated ${combos.length} Trio BOX combinations and added as options.`)
+    );
+    return;
   }
-  helper(0, []);
-  combos.forEach(c => addOptionRow(mode, c.join("-")));
-  alert((state.lang === "zh"
-    ? `已產生 ${combos.length} 組合並加入下方馬券選項。`
-    : `Generated ${combos.length} combinations and added as options.`));
+
+  if (mode === "TRIFECTA") {
+    // 三連單 BOX：先取 C(n,3)，再對每組做 3! 排列
+    if (uniq.length < 3) {
+      alert(state.lang === "zh"
+        ? "賽馬背號數量不足，無法展開三連單 BOX。"
+        : "Not enough numbers for Trifecta BOX.");
+      return;
+    }
+    const perms = [];
+    for (let i = 0; i < uniq.length; i++) {
+      for (let j = i+1; j < uniq.length; j++) {
+        for (let k = j+1; k < uniq.length; k++) {
+          const a = uniq[i], b = uniq[j], c = uniq[k];
+          perms.push([a,b,c], [a,c,b], [b,a,c], [b,c,a], [c,a,b], [c,b,a]);
+        }
+      }
+    }
+    perms.forEach(p => addOptionRow("TRIFECTA", p.join("-")));
+    alert(
+      (state.lang === "zh"
+        ? `已產生 ${perms.length} 組三連單 BOX（含所有排列）並加入下方馬券選項。`
+        : `Generated ${perms.length} Trifecta BOX permutations and added as options.`)
+    );
+    return;
+  }
 }
+function expandBanker() {
+  const mode = document.getElementById("bankerModeSelect").value; // QUINELLA / TRIO / TRIFECTA
+  const axisRaw = document.getElementById("bankerAxisInput").value;
+  const othersRaw = document.getElementById("bankerOthersInput").value;
+  const axisNums = (axisRaw.match(/\d+/g) || []).map(n => String(parseInt(n,10)));
+  const otherNums = (othersRaw.match(/\d+/g) || []).map(n => String(parseInt(n,10)));
+
+  if (axisNums.length !== 1) {
+    alert(state.lang === "zh"
+      ? "請輸入一個軸馬號碼。"
+      : "Please enter exactly one axis horse number.");
+    return;
+  }
+  const axis = axisNums[0];
+  const uniqOthers = Array.from(new Set(otherNums)).filter(n => n !== axis);
+  if (uniqOthers.length === 0) {
+    alert(state.lang === "zh"
+      ? "請輸入至少一匹相手馬號。"
+      : "Please enter at least one other horse number.");
+    return;
+  }
+
+  const tickets = [];
+
+  if (mode === "QUINELLA") {
+    uniqOthers.forEach(o => {
+      tickets.push([axis, o]);
+    });
+    tickets.forEach(t => addOptionRow("QUINELLA", t.join("-")));
+  } else if (mode === "TRIO") {
+    if (uniqOthers.length < 2) {
+      alert(state.lang === "zh"
+        ? "三連複 Banker 需要至少兩匹相手馬。"
+        : "Trio banker needs at least two other horses.");
+      return;
+    }
+    for (let i = 0; i < uniqOthers.length; i++) {
+      for (let j = i+1; j < uniqOthers.length; j++) {
+        tickets.push([axis, uniqOthers[i], uniqOthers[j]]);
+      }
+    }
+    tickets.forEach(t => addOptionRow("TRIO", t.join("-")));
+  } else if (mode === "TRIFECTA") {
+    if (uniqOthers.length < 2) {
+      alert(state.lang === "zh"
+        ? "三連單 Banker 需要至少兩匹相手馬。"
+        : "Trifecta banker needs at least two other horses.");
+      return;
+    }
+    // 軸馬固定第一名，其餘兩匹做排列
+    for (let i = 0; i < uniqOthers.length; i++) {
+      for (let j = 0; j < uniqOthers.length; j++) {
+        if (i === j) continue;
+        tickets.push([axis, uniqOthers[i], uniqOthers[j]]);
+      }
+    }
+    tickets.forEach(t => addOptionRow("TRIFECTA", t.join("-")));
+  }
+
+  alert(
+    (state.lang === "zh"
+      ? `已產生 ${tickets.length} 組 Banker 馬券並加入下方選項。`
+      : `Generated ${tickets.length} banker tickets and added as options.`)
+  );
+}
+function addBracketTicket() {
+  const raw = document.getElementById("bracketInput").value;
+  const nums = (raw.match(/\d+/g) || []).map(n => parseInt(n,10)).filter(n => !isNaN(n));
+  if (nums.length !== 2) {
+    alert(state.lang === "zh"
+      ? "請輸入兩個枠番，例如：1-3 或 1 3。"
+      : "Please enter two bracket numbers, e.g. 1-3 or 1 3.");
+    return;
+  }
+  const a = nums[0], b = nums[1];
+  if (a < 1 || a > 8 || b < 1 || b > 8) {
+    alert(state.lang === "zh"
+      ? "枠番應介於 1 到 8。"
+      : "Bracket numbers should be between 1 and 8.");
+    return;
+  }
+  const name = `${a}-${b}`;
+  addOptionRow("BRACKET", name);
+  alert(
+    (state.lang === "zh"
+      ? `已加入枠連馬券：${name}。`
+      : `Added bracket ticket: ${name}.`)
+  );
+}
+
 
 /* ===== 建立賽事（同一場會合併馬券） ===== */
 function createRace() {
@@ -555,6 +699,13 @@ function placeBet(raceId, optIndex) {
     alert(t("stakeError"));
     return;
   }
+    if (stake <= 0) {
+    alert(state.lang === "zh"
+      ? "下注點數必須大於 0。"
+      : "Stake must be greater than 0.");
+    return;
+  }
+
 
   lastBetId++;
   state.bets.push({
@@ -595,6 +746,12 @@ function isWinningBet(bet, finishOrder, runners) {
   const top2 = finishOrder[1];
   const top3 = finishOrder[2];
 
+  // ★ 加在這裡
+  function frameOf(horseNo) {
+    // 簡化版：每 2 號馬一個枠，例如 1–2 枠1, 3–4 枠2 ...
+    return Math.ceil(horseNo / 2);
+  }
+
   switch (bet.type) {
     case "WIN": {
       if (nums.length !== 1) return false;
@@ -633,6 +790,21 @@ function isWinningBet(bet, finishOrder, runners) {
     case "TRIFECTA": {
       if (nums.length !== 3 || finishOrder.length < 3) return false;
       return nums[0] === top1 && nums[1] === top2 && nums[2] === top3;
+    }
+	    case "BRACKET": {
+      const nums = parseNumbersFromName(bet.optionName);
+      if (nums.length !== 2 || finishOrder.length < 2) return false;
+      const a = nums[0], b = nums[1];
+      const f1 = frameOf(top1);
+      const f2 = frameOf(top2);
+      if (a === b) {
+        // 同枠：第一、二名都在同一枠
+        return f1 === a && f2 === a;
+      } else {
+        const setA = new Set([a, b]);
+        const setB = new Set([f1, f2]);
+        return setA.has(f1) && setA.has(f2) && setA.size === setB.size;
+      }
     }
     default:
       return false;

@@ -111,37 +111,88 @@
     一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。
   </p>
 
-  <!-- BOX 展開小工具 -->
+  <!-- 進階工具：可折疊 -->
   <div class="card" style="background:#f9fafb; margin-bottom:10px; padding:10px 12px;">
-    <p class="small">
-      <strong id="boxHelperTitle">BOX 展開小工具</strong><br>
-      <span id="boxHelperDesc">
-        輸入賽馬背號 / PP（例如：<code>6 7 13 16</code>），選擇 BOX 券種，系統會自動產生所有組合並加入下方選項。
-      </span>
-    </p>
-    <label class="small">
-      <span id="boxNumbersLabel">賽馬背號 / PP：</span>
-      <input type="text" id="boxNumbersInput" placeholder="例：6 7 13 16 / e.g. 6 7 13 16">
-    </label>
-    <br>
-    <label class="small">
-      <span id="boxModeLabel">BOX 券種：</span>
-      <select id="boxModeSelect">
-        <option value="QUINELLA">馬連 BOX（QUINELLA, 2頭組合）</option>
-        <option value="TRIO">三連複 BOX（TRIO, 3頭組合）</option>
-        <option value="TRIFECTA">三連單 BOX（TRIFECTA, 3頭組合）</option>
-      </select>
-    </label>
-    <button class="secondary" type="button" onclick="expandBox()" id="boxExpandBtn">
-      BOX 展開 → 加入選項
-    </button>
+    <details>
+      <summary>進階工具 / Advanced tools</summary>
+
+      <!-- BOX 展開小工具 -->
+      <div class="small" style="margin-top:8px;">
+        <p>
+          <strong id="boxHelperTitle">BOX 展開小工具</strong><br>
+          <span id="boxHelperDesc">
+            輸入賽馬背號 / PP（例如：<code>6 7 13 16</code>），選擇 BOX 券種，系統會自動產生所有組合並加入下方選項。
+          </span>
+        </p>
+        <label class="small">
+          <span id="boxNumbersLabel">賽馬背號 / PP：</span>
+          <input type="text" id="boxNumbersInput" placeholder="例：6 7 13 16 / e.g. 6 7 13 16">
+        </label>
+        <br>
+        <label class="small">
+          <span id="boxModeLabel">BOX 券種：</span>
+          <select id="boxModeSelect">
+            <option value="QUINELLA">馬連 BOX（QUINELLA, 2頭組合）</option>
+            <option value="TRIO">三連複 BOX（TRIO, 3頭組合）</option>
+            <option value="TRIFECTA">三連單 BOX（TRIFECTA, 3頭排列）</option>
+          </select>
+        </label>
+        <button class="secondary" type="button" onclick="expandBox()" id="boxExpandBtn">
+          BOX 展開 → 加入選項
+        </button>
+      </div>
+
+      <hr>
+
+      <!-- Banker 小工具（軸馬） -->
+      <div class="small">
+        <p><strong>Banker 軸馬小工具</strong></p>
+        <label>
+          券種：
+          <select id="bankerModeSelect">
+            <option value="QUINELLA">馬連 Banker（QUINELLA）</option>
+            <option value="TRIO">三連複 Banker（TRIO）</option>
+            <option value="TRIFECTA">三連單 Banker（TRIFECTA，軸馬固定第1名）</option>
+          </select>
+        </label>
+        <br>
+        <label>
+          軸馬號碼：
+          <input type="text" id="bankerAxisInput" placeholder="例：7 / e.g. 7">
+        </label>
+        <br>
+        <label>
+          其他馬號：
+          <input type="text" id="bankerOthersInput" placeholder="例：3 6 13 / e.g. 3 6 13">
+        </label>
+        <br>
+        <button class="secondary" type="button" onclick="expandBanker()">Banker 展開 → 加入選項</button>
+      </div>
+
+      <hr>
+
+      <!-- Bracket 小工具（枠連） -->
+      <div class="small">
+        <p><strong>Bracket（枠連）小工具</strong></p>
+        <label>
+          枠番組合：
+          <input type="text" id="bracketInput" placeholder="例：1-3 或 1 3">
+        </label>
+        <button class="secondary" type="button" onclick="addBracketTicket()">加入枠連馬券</button>
+        <p class="small">
+          會建立券種：枠連（Bracket Quinella），名稱為枠番組合，例如 <code>1-3</code>。<br>
+          中獎判定會依馬號推算枠番（簡化版）。
+        </p>
+      </div>
+
+    </details>
   </div>
 
   <!-- 手動新增券種 -->
   <div id="optionsContainer"></div>
   <button class="secondary" type="button" onclick="addOptionRow()" id="addOptionBtn">新增馬券選項</button>
   <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立比賽</button>
-</div>
+</div> 
 
 <!-- 賽事管理區 -->
 <div class="card">
