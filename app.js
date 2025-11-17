@@ -483,6 +483,51 @@ function refreshBetTypeSelects() {
     });
   });
 }
+/* ===== 重新建立「競馬場 / 場地」下拉選單 ===== */
+function refreshRacecourseSelect() {
+  const sel = document.getElementById("racecourseSelect");
+  if (!sel) return;
+
+  const current = sel.value || "";
+
+  // 清空後重建
+  sel.innerHTML = "";
+
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = t("racecourseNotSet");
+  sel.appendChild(first);
+
+  RACECOURSES.forEach(rc => {
+    const opt = document.createElement("option");
+    opt.value = rc.code;
+    opt.textContent = racecourseLabel(rc.code); // 會依語言顯示 日文 or 英文
+    if (rc.code === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function refreshSurfaceSelect() {
+  const sel = document.getElementById("surfaceSelect");
+  if (!sel) return;
+
+  const current = sel.value || "";
+
+  sel.innerHTML = "";
+
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = t("surfaceNotSet");
+  sel.appendChild(first);
+
+  ["TURF", "DIRT"].forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = surfaceLabel(code); // zh: 草地 / 泥地；en: Turf / Dirt
+    if (code === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 
 /* ===== BOX 展開 ===== */
 function expandBox() {
@@ -1407,6 +1452,8 @@ function renderAll() {
   renderSettle();
   renderHistory();
   refreshBetTypeSelects();
+  refreshRacecourseSelect();  
+  refreshSurfaceSelect();     
 }
 
 /* ===== init ===== */
