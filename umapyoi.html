@@ -111,7 +111,7 @@
     一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。
   </p>
 
-  <!-- 進階工具：可折疊 -->
+  <!-- 進階工具：可折疊（只有 BOX / Banker / Bracket 放在這裡） -->
   <div class="card" style="background:#f9fafb; margin-bottom:10px; padding:10px 12px;">
     <details>
       <summary>進階工具 / Advanced tools</summary>
@@ -198,11 +198,19 @@
         </p>
       </div>
 
-  <!-- 手動新增券種 -->
+    </details>
+  </div>
+
+  <!-- 手動新增券種（★ 基本的選項列在這裡） -->
   <div id="optionsContainer"></div>
-  <button class="secondary" type="button" onclick="addOptionRow()" id="addOptionBtn">新增馬券選項</button>
-  <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">建立比賽</button>
-</div> 
+  <button class="secondary" type="button" onclick="addOptionRow()" id="addOptionBtn">
+    新增馬券選項
+  </button>
+  <button class="primary" type="button" onclick="createRace()" id="createRaceBtn">
+    建立比賽
+  </button>
+</div>
+
 
 <!-- 賽事管理區 -->
 <div class="card">
