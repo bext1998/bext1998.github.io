@@ -1,4 +1,3 @@
-<script>
 /* ========= 資料結構 =========
 state = {
   lang: "zh" | "en",
@@ -1139,4 +1138,3 @@ document.getElementById("langToggle").onclick = () => {
   saveState();
   renderAll();
 };
-</script>
