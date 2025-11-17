@@ -146,9 +146,10 @@
 
       <!-- Banker 小工具（軸馬） -->
       <div class="small">
-        <<strong id="bankerTitle"></strong>
+        <p><strong id="bankerTitle">Banker 軸馬小工具</strong></p>
+
         <label>
-         <span id="bankerModeLabel"></span>
+          <span id="bankerModeLabel">券種：</span>
           <select id="bankerModeSelect">
             <option value="QUINELLA">馬連 Banker（QUINELLA）</option>
             <option value="TRIO">三連複 Banker（TRIO）</option>
@@ -156,36 +157,46 @@
           </select>
         </label>
         <br>
+
         <label>
-        <span id="bankerAxisLabel"></span>
+          <span id="bankerAxisLabel">軸馬號碼：</span>
           <input type="text" id="bankerAxisInput" placeholder="例：7 / e.g. 7">
         </label>
         <br>
+
         <label>
-         <span id="bankerOthersLabel"></span>
+          <span id="bankerOthersLabel">其他馬號：</span>
           <input type="text" id="bankerOthersInput" placeholder="例：3 6 13 / e.g. 3 6 13">
         </label>
         <br>
-        <button class="secondary" type="button" onclick="expandBanker()"><button id="bankerExpandBtn"></button>
+
+        <button class="secondary" type="button"
+                onclick="expandBanker()" id="bankerExpandBtn">
+          Banker 展開 → 加入選項
+        </button>
       </div>
 
       <hr>
 
       <!-- Bracket 小工具（枠連） -->
       <div class="small">
-        <strong id="bracketTitle"></strong>
+        <p><strong id="bracketTitle">Bracket（枠連）小工具</strong></p>
+
         <label>
-          <label id="bracketInputLabel"></label>
+          <span id="bracketInputLabel">枠番組合：</span>
           <input type="text" id="bracketInput" placeholder="例：1-3 或 1 3">
         </label>
-        <button class="secondary" type="button" onclick="addBracketTicket()"><button id="bracketAddBtn"></button>
-        <p class="small"
-          id="bracketInfo"
+
+        <button class="secondary" type="button"
+                onclick="addBracketTicket()" id="bracketAddBtn">
+          加入枠連馬券
+        </button>
+
+        <p class="small" id="bracketInfo">
+          會建立券種：枠連（Bracket Quinella），名稱為枠番組合，例如 <code>1-3</code>。<br>
+          中獎判定會依馬號推算枠番（簡化版）。
         </p>
       </div>
-
-    </details>
-  </div>
 
   <!-- 手動新增券種 -->
   <div id="optionsContainer"></div>
