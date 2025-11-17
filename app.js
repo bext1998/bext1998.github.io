@@ -440,36 +440,46 @@ function addOptionRow(prefType = "", prefName = "") {
   row.appendChild(removeBtn);
   container.appendChild(row);
 }
-/* ===== 重新套用券種選單文字（避免語言切換時還是舊語言） ===== */
+/* ===== 重新套用券種選單文字（語言切換時重建 option） ===== */
 function refreshBetTypeSelects() {
-  // 建立新賽事區的券種 select（class="opt-type"）
+  // 建立新賽事區：上方「新增馬券選項」那幾個 select
   document.querySelectorAll("select.opt-type").forEach(sel => {
-    if (sel.options.length === 0) return;
+    const current = sel.value; // 先記住目前選到哪一種券種
 
-    // 第一個是 placeholder
-    sel.options[0].textContent = t("selectBetTypePlaceholder");
+    // 先清空，再重建整個選單
+    sel.innerHTML = "";
 
-    // 後面依照 BET_TYPES 順序更新顯示文字
-    BET_TYPES.forEach((bt, idx) => {
-      const optionIndex = idx + 1; // 從第 2 個 option 開始
-      if (sel.options[optionIndex]) {
-        sel.options[optionIndex].textContent =
-          `${betTypeLabel(bt.code)} (${bt.code})`;
-      }
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = t("selectBetTypePlaceholder");
+    sel.appendChild(placeholder);
+
+    BET_TYPES.forEach(bt => {
+      const opt = document.createElement("option");
+      opt.value = bt.code;
+      opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
+      if (bt.code === current) opt.selected = true;
+      sel.appendChild(opt);
     });
   });
 
-  // 賽事管理區「追加馬券選項」的券種 select（id 以 inlineType- 開頭）
+  // 賽事管理區：每一場底下「追加馬券選項」那個 select
   document.querySelectorAll('select[id^="inlineType-"]').forEach(sel => {
-    if (sel.options.length === 0) return;
+    const current = sel.value;
 
-    sel.options[0].textContent = t("selectBetTypePlaceholder");
-    BET_TYPES.forEach((bt, idx) => {
-      const optionIndex = idx + 1;
-      if (sel.options[optionIndex]) {
-        sel.options[optionIndex].textContent =
-          `${betTypeLabel(bt.code)} (${bt.code})`;
-      }
+    sel.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = t("selectBetTypePlaceholder");
+    sel.appendChild(placeholder);
+
+    BET_TYPES.forEach(bt => {
+      const opt = document.createElement("option");
+      opt.value = bt.code;
+      opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
+      if (bt.code === current) opt.selected = true;
+      sel.appendChild(opt);
     });
   });
 }
