@@ -291,7 +291,6 @@ function loadState() {
 }
 
 /* ===== UI 文案更新 ===== */
-/* ===== UI 文案更新 ===== */
 function updateStaticTexts() {
   // 主標題 & slogan
   document.getElementById("mainTitleZh").style.display = state.lang === "zh" ? "" : "none";
@@ -440,6 +439,39 @@ function addOptionRow(prefType = "", prefName = "") {
   row.appendChild(nameInput);
   row.appendChild(removeBtn);
   container.appendChild(row);
+}
+/* ===== 重新套用券種選單文字（避免語言切換時還是舊語言） ===== */
+function refreshBetTypeSelects() {
+  // 建立新賽事區的券種 select（class="opt-type"）
+  document.querySelectorAll("select.opt-type").forEach(sel => {
+    if (sel.options.length === 0) return;
+
+    // 第一個是 placeholder
+    sel.options[0].textContent = t("selectBetTypePlaceholder");
+
+    // 後面依照 BET_TYPES 順序更新顯示文字
+    BET_TYPES.forEach((bt, idx) => {
+      const optionIndex = idx + 1; // 從第 2 個 option 開始
+      if (sel.options[optionIndex]) {
+        sel.options[optionIndex].textContent =
+          `${betTypeLabel(bt.code)} (${bt.code})`;
+      }
+    });
+  });
+
+  // 賽事管理區「追加馬券選項」的券種 select（id 以 inlineType- 開頭）
+  document.querySelectorAll('select[id^="inlineType-"]').forEach(sel => {
+    if (sel.options.length === 0) return;
+
+    sel.options[0].textContent = t("selectBetTypePlaceholder");
+    BET_TYPES.forEach((bt, idx) => {
+      const optionIndex = idx + 1;
+      if (sel.options[optionIndex]) {
+        sel.options[optionIndex].textContent =
+          `${betTypeLabel(bt.code)} (${bt.code})`;
+      }
+    });
+  });
 }
 
 /* ===== BOX 展開 ===== */
@@ -1364,6 +1396,7 @@ function renderAll() {
   renderBetting();
   renderSettle();
   renderHistory();
+  refreshBetTypeSelects();
 }
 
 /* ===== init ===== */
