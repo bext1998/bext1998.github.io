@@ -148,11 +148,23 @@ const I18N = {
     runnerCountLabel: "Number of runners:",
     placeRuleHint: "PLACE: 5–7 runners → 1st–2nd; 8+ runners → 1st–3rd; 4 or fewer: PLACE usually not offered.",
     optionsIntro: "One option = one ticket. Choose JRA bet type, and enter horse number(s) / PP using digits with '-' (e.g. 13, 6-7, 6-7-13).",
-    boxHelperTitle: "BOX Helper",
+    advancedToolsTitle: "Advanced tools",
+	boxHelperTitle: "BOX Helper",
     boxHelperDesc: "Enter horse numbers / PP (e.g. 6 7 13 16), choose BOX type, and all combinations will be added as options.",
     boxNumbersLabel: "Horse No. / PP:",
     boxModeLabel: "BOX bet type:",
     boxExpandBtn: "Expand BOX → Add options",
+	bankerTitle: "Banker Helper",
+    bankerDesc: "Create banker combinations using one axis horse and multiple other horses.",
+    bankerModeLabel: "Bet type:",
+    bankerAxisLabel: "Axis horse:",
+    bankerOthersLabel: "Other horses:",
+    bankerExpandBtn: "Expand Banker → Add options",
+	bracketTitle: "Bracket (Waku-ren) Helper",
+	bracketDesc: "Enter bracket numbers (1–8). The system will create a Bracket Quinella ticket.",
+	bracketInputLabel: "Bracket numbers:",
+	bracketAddBtn: "Add bracket ticket",
+	bracketInfo:"Creates bet type: Bracket Quinella. The name will be the bracket combination, e.g. 1-3. The winning check uses simplified frame mapping.",
     addOptionBtn: "Add ticket option",
     createRaceBtn: "Create Race",
     raceManageTitle: "Race Management (runners / odds)",
@@ -270,16 +282,20 @@ function loadState() {
 }
 
 /* ===== UI 文案更新 ===== */
+/* ===== UI 文案更新 ===== */
 function updateStaticTexts() {
+  // 主標題 & slogan
   document.getElementById("mainTitleZh").style.display = state.lang === "zh" ? "" : "none";
   document.getElementById("mainTitleEn").style.display = state.lang === "en" ? "" : "none";
   document.getElementById("sloganZh").style.display = state.lang === "zh" ? "" : "none";
   document.getElementById("sloganEn").style.display = state.lang === "en" ? "" : "none";
 
+  // 點數區
   document.getElementById("pointsSectionTitle").textContent = t("pointsSectionTitle");
   document.getElementById("pointsLabel").textContent = t("pointsLabel");
   document.getElementById("pointsHint").textContent = t("pointsHint");
 
+  // 建立新賽事
   document.getElementById("createRaceTitle").textContent = t("createRaceTitle");
   document.getElementById("raceNameLabel").textContent = t("raceNameLabel");
   document.getElementById("raceDateLabel").textContent = t("raceDateLabel");
@@ -287,41 +303,96 @@ function updateStaticTexts() {
   document.getElementById("placeRuleHint").textContent = t("placeRuleHint");
   document.getElementById("optionsIntro").textContent = t("optionsIntro");
 
-  document.getElementById("boxHelperTitle").textContent = t("boxHelperTitle");
-  document.getElementById("boxHelperDesc").textContent = t("boxHelperDesc");
-  document.getElementById("boxNumbersLabel").textContent = t("boxNumbersLabel");
-  document.getElementById("boxModeLabel").textContent = t("boxModeLabel");
-  document.getElementById("boxExpandBtn").textContent = t("boxExpandBtn");
+  // BOX 小工具
+  const boxHelperTitleEl = document.getElementById("boxHelperTitle");
+  if (boxHelperTitleEl) boxHelperTitleEl.textContent = t("boxHelperTitle");
+  const boxHelperDescEl = document.getElementById("boxHelperDesc");
+  if (boxHelperDescEl) boxHelperDescEl.textContent = t("boxHelperDesc");
+  const boxNumbersLabelEl = document.getElementById("boxNumbersLabel");
+  if (boxNumbersLabelEl) boxNumbersLabelEl.textContent = t("boxNumbersLabel");
+  const boxModeLabelEl = document.getElementById("boxModeLabel");
+  if (boxModeLabelEl) boxModeLabelEl.textContent = t("boxModeLabel");
+  const boxExpandBtnEl = document.getElementById("boxExpandBtn");
+  if (boxExpandBtnEl) boxExpandBtnEl.textContent = t("boxExpandBtn");
 
-  document.getElementById("addOptionBtn").textContent = t("addOptionBtn");
-  document.getElementById("createRaceBtn").textContent = t("createRaceBtn");
+  // 手動新增馬券按鈕 & 建立比賽按鈕
+  const addOptionBtnEl = document.getElementById("addOptionBtn");
+  if (addOptionBtnEl) addOptionBtnEl.textContent = t("addOptionBtn");
+  const createRaceBtnEl = document.getElementById("createRaceBtn");
+  if (createRaceBtnEl) createRaceBtnEl.textContent = t("createRaceBtn");
 
+  // 賽事管理
   document.getElementById("raceManageTitle").textContent = t("raceManageTitle");
   document.getElementById("raceManageHint").textContent = t("raceManageHint");
 
+  // 下注區
   document.getElementById("bettingTitle").textContent = t("bettingTitle");
   document.getElementById("bettingHint").textContent = t("bettingHint");
 
+  // 結算區
   document.getElementById("settleTitle").textContent = t("settleTitle");
   document.getElementById("settleHint").textContent = t("settleHint");
 
+  // 下注紀錄 & 系統操作
   document.getElementById("historyTitle").textContent = t("historyTitle");
   document.getElementById("systemTitle").textContent = t("systemTitle");
   document.getElementById("resetBtn").textContent = t("resetBtn");
   document.getElementById("resetHint").textContent = t("resetHint");
+
+  // 語言切換 & PDF 按鈕
   document.getElementById("langToggle").textContent = t("langToggle");
   document.getElementById("howToBetBtn").textContent = t("howToBetBtn");
 
-  document.getElementById("racecourseLabelSpan").textContent = t("racecourseLabel");
-  document.getElementById("surfaceLabelSpan").textContent = t("surfaceLabel");
-  document.getElementById("raceNumberLabelSpan").textContent = t("raceNumberLabel");
+  // 建立賽事：競馬場 / 場地 / 場次 label
+  const racecourseLabelSpan = document.getElementById("racecourseLabelSpan");
+  if (racecourseLabelSpan) racecourseLabelSpan.textContent = t("racecourseLabel");
+  const surfaceLabelSpan = document.getElementById("surfaceLabelSpan");
+  if (surfaceLabelSpan) surfaceLabelSpan.textContent = t("surfaceLabel");
+  const raceNumberLabelSpan = document.getElementById("raceNumberLabelSpan");
+  if (raceNumberLabelSpan) raceNumberLabelSpan.textContent = t("raceNumberLabel");
 
+  // 建立賽事：下拉選單第一項「未選擇」
   const rcSel = document.getElementById("racecourseSelect");
-  if (rcSel && rcSel.options.length > 0) rcSel.options[0].textContent = t("racecourseNotSet");
+  if (rcSel && rcSel.options.length > 0) {
+    rcSel.options[0].textContent = t("racecourseNotSet");
+  }
   const surfSel = document.getElementById("surfaceSelect");
-  if (surfSel && surfSel.options.length > 0) surfSel.options[0].textContent = t("surfaceNotSet");
+  if (surfSel && surfSel.options.length > 0) {
+    surfSel.options[0].textContent = t("surfaceNotSet");
+  }
   const numSel = document.getElementById("raceNumberSelect");
-  if (numSel && numSel.options.length > 0) numSel.options[0].textContent = t("raceNumberNotSet");
+  if (numSel && numSel.options.length > 0) {
+    numSel.options[0].textContent = t("raceNumberNotSet");
+  }
+
+  // Banker 小工具
+  const bankerTitleEl = document.getElementById("bankerTitle");
+  if (bankerTitleEl) bankerTitleEl.textContent = t("bankerTitle");
+
+  const bankerModeLabelEl = document.getElementById("bankerModeLabel");
+  if (bankerModeLabelEl) bankerModeLabelEl.textContent = t("bankerModeLabel");
+
+  const bankerAxisLabelEl = document.getElementById("bankerAxisLabel");
+  if (bankerAxisLabelEl) bankerAxisLabelEl.textContent = t("bankerAxisLabel");
+
+  const bankerOthersLabelEl = document.getElementById("bankerOthersLabel");
+  if (bankerOthersLabelEl) bankerOthersLabelEl.textContent = t("bankerOthersLabel");
+
+  const bankerExpandBtn = document.getElementById("bankerExpandBtn");
+  if (bankerExpandBtn) bankerExpandBtn.textContent = t("bankerExpandBtn");
+
+  // Bracket 小工具
+  const bracketTitleEl = document.getElementById("bracketTitle");
+  if (bracketTitleEl) bracketTitleEl.textContent = t("bracketTitle");
+
+  const bracketInputLabelEl = document.getElementById("bracketInputLabel");
+  if (bracketInputLabelEl) bracketInputLabelEl.textContent = t("bracketInputLabel");
+
+  const bracketAddBtnEl = document.getElementById("bracketAddBtn");
+  if (bracketAddBtnEl) bracketAddBtnEl.textContent = t("bracketAddBtn");
+
+  const bracketInfoEl = document.getElementById("bracketInfo");
+  if (bracketInfoEl) bracketInfoEl.textContent = t("bracketInfo");
 }
 
 /* ===== 建立賽事：券種 row ===== */
@@ -538,7 +609,6 @@ function addBracketTicket() {
       : `Added bracket ticket: ${name}.`)
   );
 }
-
 
 /* ===== 建立賽事（同一場會合併馬券） ===== */
 function createRace() {
