@@ -59,6 +59,19 @@ const RACECOURSES = [
   { code: "KOKURA",   jp: "小倉",   en: "Kokura" }
 ];
 
+function racecourseLabel(code) {
+  if (!code) return "";
+  const rc = RACECOURSES.find(r => r.code === code);
+  if (!rc) return code;
+  return state.lang === "zh" ? rc.jp : rc.en;
+}
+
+function surfaceLabel(code) {
+  if (code === "TURF") return state.lang === "zh" ? "草地" : "Turf";
+  if (code === "DIRT") return state.lang === "zh" ? "泥地" : "Dirt";
+  return "";
+}
+
 // 文案
 const I18N = {
   zh: {
