@@ -1,0 +1,13 @@
+{
+  "name": "bext1998.github.io",
+  "version": "1.0.0",
+  "description": "--- ### 你的個人賽馬預測與下注模擬器   ### Your personal horse racing prediction & betting simulator ---",
+  "main": "app.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
