@@ -26,6 +26,11 @@ state = {
 
 const STORAGE_KEY = "CG_Betting_V9";
 
+const HOW_TO_BET_LINKS = {
+  zh: "how_to_bet_en.pdf",
+  en: "how_to_bet_en.pdf"
+};
+
 let state = {
   lang: "zh",
   points: 1000,
@@ -146,7 +151,7 @@ const I18N = {
     placeRule2: "複勝：1–2 著內",
     placeRule3: "複勝：1–3 著內",
     placeRule1: "複勝：1 著內（實務上 4 頭以下通常不賣複勝）",
-    howToBetBtn: "如何下注說明（PDF）",
+    howToBetBtn: "下注指南（英文 PDF）",
     racecourseLabel: "競馬場：",
     surfaceLabel: "場地：",
     raceNumberLabel: "場次：",
@@ -363,6 +368,10 @@ function updateStaticTexts() {
   // 語言切換 & PDF 按鈕
   document.getElementById("langToggle").textContent = t("langToggle");
   document.getElementById("howToBetBtn").textContent = t("howToBetBtn");
+  const howToBetLink = document.getElementById("howToBetLink");
+  if (howToBetLink) {
+    howToBetLink.href = HOW_TO_BET_LINKS[state.lang] || HOW_TO_BET_LINKS.en;
+  }
 
   // 建立賽事：競馬場 / 場地 / 場次 label
   const racecourseLabelSpan = document.getElementById("racecourseLabelSpan");
