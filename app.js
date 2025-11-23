@@ -319,6 +319,27 @@ function loadState() {
     console.error("load error", e);
   }
 }
+function normalizeState() {
+  if (!state || typeof state !== "object") {
+    state = {};
+  }
+
+  if (state.lang !== "zh" && state.lang !== "en") {
+    state.lang = "zh";
+  }
+
+  if (typeof state.points !== "number" || isNaN(state.points)) {
+    state.points = 1000;
+  }
+
+  if (!Array.isArray(state.races)) {
+    state.races = [];
+  }
+
+  if (!Array.isArray(state.bets)) {
+    state.bets = [];
+  }
+}
 
 /* ===== UI 文案更新 ===== */
 function updateStaticTexts() {
@@ -1522,6 +1543,7 @@ function renderAll() {
 /* ===== init ===== */
 if (typeof document !== "undefined") {
   loadState();
+  normalizeState();
 
   /* 把 lastBetId 調成現有 bets 的最大值，避免重複 ID */
   if (Array.isArray(state.bets) && state.bets.length > 0) {
