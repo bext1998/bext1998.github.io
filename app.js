@@ -1470,25 +1470,31 @@ function renderAll() {
 }
 
 /* ===== init ===== */
-loadState();
+if (typeof document !== "undefined") {
+  loadState();
 
-/* 把 lastBetId 調成現有 bets 的最大值，避免重複 ID */
-if (Array.isArray(state.bets) && state.bets.length > 0) {
-  lastBetId = Math.max(...state.bets.map(b => b.id || 0));
-}
+  /* 把 lastBetId 調成現有 bets 的最大值，避免重複 ID */
+  if (Array.isArray(state.bets) && state.bets.length > 0) {
+    lastBetId = Math.max(...state.bets.map(b => b.id || 0));
+  }
 
-updateStaticTexts();
-if (typeof state.points !== "number" || isNaN(state.points)) {
-  state.points = 1000;
-}
-if (document.getElementById("optionsContainer").children.length === 0) {
-  addOptionRow();
-}
-renderAll();
-
-/* 語言切換 */
-document.getElementById("langToggle").onclick = () => {
-  state.lang = state.lang === "zh" ? "en" : "zh";
-  saveState();
+  updateStaticTexts();
+  if (typeof state.points !== "number" || isNaN(state.points)) {
+    state.points = 1000;
+  }
+  if (document.getElementById("optionsContainer").children.length === 0) {
+    addOptionRow();
+  }
   renderAll();
-};
+
+  /* 語言切換 */
+  document.getElementById("langToggle").onclick = () => {
+    state.lang = state.lang === "zh" ? "en" : "zh";
+    saveState();
+    renderAll();
+  };
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { placePayPositions, isWinningBet, parseNumbersFromName };
+}
