@@ -882,18 +882,11 @@ function placeBet(raceId, optIndex) {
 
   const stakeStr = prompt(t("stakePrompt"));
   if (stakeStr === null) return;
-  const stake = parseInt(stakeStr, 10);
-  if (isNaN(stake) || !Number.isInteger(stake)) {
+  const stakeNumber = Number.parseFloat(stakeStr);
+  if (!Number.isInteger(stakeNumber) || stakeNumber <= 0) {
     alert(t("stakeError"));
     return;
   }
-    if (stake <= 0) {
-    alert(state.lang === "zh"
-      ? "下注點數必須大於 0。"
-      : "Stake must be greater than 0.");
-    return;
-  }
-
 
   lastBetId++;
   state.bets.push({
@@ -906,12 +899,12 @@ function placeBet(raceId, optIndex) {
     raceNumber: race.raceNumber || null,
     type: opt.type,
     optionName: opt.name,
-    stake,
+    stake: stakeNumber,
     result: "pending",
     odds: null,
     winAmount: 0
   });
-  state.points -= stake;
+  state.points -= stakeNumber;
   saveState();
   renderAll();
 }
