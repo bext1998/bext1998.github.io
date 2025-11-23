@@ -88,6 +88,12 @@ const I18N = {
     raceDateLabel: "賽事日期：",
     runnerCountLabel: "出賽頭數：",
     placeRuleHint: "複勝：5–7 頭 → 2 著內；8 頭以上 → 3 著內；4 頭以下理論上不賣複勝。",
+    manageBetCombinedTitle: "賽事管理與下注",
+    ticketToolsTitle: "新增馬券與進階工具",
+    toolRaceLabel: "選擇賽事：",
+    toolRacePlaceholder: "請選擇要加入的賽事",
+    toolRaceEmpty: "請先建立賽事",
+    selectRaceForTools: "請先選擇要加入馬券的賽事。",
     optionsIntro: "一個選項 = 一張馬券。券種請選擇 JRA 類型，賽馬背號/PP 用半形數字與 - 連接（例：13、6-7、6-7-13）。",
     boxHelperTitle: "BOX 展開小工具",
     boxHelperDesc: "輸入賽馬背號 / PP（例如：6 7 13 16），選擇 BOX 券種，系統會自動產生所有組合並加入下方選項。",
@@ -174,6 +180,12 @@ const I18N = {
     raceDateLabel: "Race date:",
     runnerCountLabel: "Number of runners:",
     placeRuleHint: "PLACE: 5–7 runners → 1st–2nd; 8+ runners → 1st–3rd; 4 or fewer: PLACE usually not offered.",
+    manageBetCombinedTitle: "Race management & betting",
+    ticketToolsTitle: "Add tickets & advanced tools",
+    toolRaceLabel: "Target race:",
+    toolRacePlaceholder: "Select a race",
+    toolRaceEmpty: "Create a race first",
+    selectRaceForTools: "Please select a race before adding tickets.",
     optionsIntro: "One option = one ticket. Choose JRA bet type, and enter horse number(s) / PP using digits with '-' (e.g. 13, 6-7, 6-7-13).",
     advancedToolsTitle: "Advanced tools",
 	boxHelperTitle: "BOX Helper",
@@ -327,7 +339,17 @@ function updateStaticTexts() {
   document.getElementById("raceDateLabel").textContent = t("raceDateLabel");
   document.getElementById("runnerCountLabel").textContent = t("runnerCountLabel");
   document.getElementById("placeRuleHint").textContent = t("placeRuleHint");
+  const manageBetCombinedTitleEl = document.getElementById("manageBetCombinedTitle");
+  if (manageBetCombinedTitleEl) manageBetCombinedTitleEl.textContent = t("manageBetCombinedTitle");
+  const ticketToolsTitleEl = document.getElementById("ticketToolsTitle");
+  if (ticketToolsTitleEl) ticketToolsTitleEl.textContent = t("ticketToolsTitle");
   document.getElementById("optionsIntro").textContent = t("optionsIntro");
+  const toolRaceLabelEl = document.getElementById("toolRaceLabel");
+  if (toolRaceLabelEl) toolRaceLabelEl.textContent = t("toolRaceLabel");
+  const labelTypeEl = document.getElementById("labelType");
+  if (labelTypeEl) labelTypeEl.textContent = t("labelType");
+  const labelNameEl = document.getElementById("labelName");
+  if (labelNameEl) labelNameEl.textContent = t("labelName");
 
   // BOX 小工具
   const boxHelperTitleEl = document.getElementById("boxHelperTitle");
@@ -425,66 +447,49 @@ function updateStaticTexts() {
   if (bracketInfoEl) bracketInfoEl.textContent = t("bracketInfo");
 }
 
-/* ===== 建立賽事：券種 row ===== */
-function addOptionRow(prefType = "", prefName = "") {
-  const container = document.getElementById("optionsContainer");
-  const row = document.createElement("div");
-  row.className = "option-row";
-
-  const typeSelect = document.createElement("select");
-  typeSelect.className = "opt-type";
-  const defaultOpt = document.createElement("option");
-  defaultOpt.value = "";
-  defaultOpt.textContent = t("selectBetTypePlaceholder");
-  typeSelect.appendChild(defaultOpt);
-  BET_TYPES.forEach(bt => {
-    const opt = document.createElement("option");
-    opt.value = bt.code;
-    opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
-    typeSelect.appendChild(opt);
-  });
-  if (prefType) typeSelect.value = prefType;
-
-  const nameInput = document.createElement("input");
-  nameInput.type = "text";
-  nameInput.className = "opt-name";
-  nameInput.placeholder = horseNamePlaceholder();
-  if (prefName) nameInput.value = prefName;
-
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "danger";
-  removeBtn.textContent = "X";
-  removeBtn.onclick = () => row.remove();
-
-  row.appendChild(typeSelect);
-  row.appendChild(nameInput);
-  row.appendChild(removeBtn);
-  container.appendChild(row);
+/* ===== 新增馬券工具 ===== */
+function getToolRaceId() {
+  const sel = document.getElementById("toolRaceSelect");
+  if (!sel) return null;
+  const val = sel.value;
+  if (!val) return null;
+  const id = parseInt(val, 10);
+  return isNaN(id) ? null : id;
+}
+function requireToolRaceId() {
+  const raceId = getToolRaceId();
+  if (!raceId) {
+    alert(t("selectRaceForTools"));
+    return null;
+  }
+  return raceId;
+}
+function appendOptionsToRace(raceId, options) {
+  const race = state.races.find(r => r.id === raceId);
+  if (!race) return false;
+  const valid = options.filter(opt => opt.type && opt.name);
+  if (valid.length === 0) return false;
+  valid.forEach(opt => race.options.push({ type: opt.type, name: opt.name, odds: null }));
+  saveState();
+  renderAll();
+  return true;
+}
+function addOptionFromTool() {
+  const raceId = requireToolRaceId();
+  if (!raceId) return;
+  const typeEl = document.getElementById("toolTypeSelect");
+  const nameEl = document.getElementById("toolNameInput");
+  if (!typeEl || !nameEl) return;
+  const type = typeEl.value.trim();
+  const name = nameEl.value.trim();
+  if (!type || !name) { alert(t("optionIncomplete")); return; }
+  if (appendOptionsToRace(raceId, [{ type, name }])) {
+    typeEl.value = "";
+    nameEl.value = "";
+  }
 }
 /* ===== 重新套用券種選單文字（語言切換時重建 option） ===== */
 function refreshBetTypeSelects() {
-  // 建立新賽事區：上方「新增馬券選項」那幾個 select
-  document.querySelectorAll("select.opt-type").forEach(sel => {
-    const current = sel.value; // 先記住目前選到哪一種券種
-
-    // 先清空，再重建整個選單
-    sel.innerHTML = "";
-
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = t("selectBetTypePlaceholder");
-    sel.appendChild(placeholder);
-
-    BET_TYPES.forEach(bt => {
-      const opt = document.createElement("option");
-      opt.value = bt.code;
-      opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
-      if (bt.code === current) opt.selected = true;
-      sel.appendChild(opt);
-    });
-  });
-
   // 賽事管理區：每一場底下「追加馬券選項」那個 select
   document.querySelectorAll('select[id^="inlineType-"]').forEach(sel => {
     const current = sel.value;
@@ -504,6 +509,23 @@ function refreshBetTypeSelects() {
       sel.appendChild(opt);
     });
   });
+
+  const toolType = document.getElementById("toolTypeSelect");
+  if (toolType) {
+    const current = toolType.value;
+    toolType.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = t("selectBetTypePlaceholder");
+    toolType.appendChild(placeholder);
+    BET_TYPES.forEach(bt => {
+      const opt = document.createElement("option");
+      opt.value = bt.code;
+      opt.textContent = `${betTypeLabel(bt.code)} (${bt.code})`;
+      if (bt.code === current) opt.selected = true;
+      toolType.appendChild(opt);
+    });
+  }
 }
 /* ===== 重新建立「競馬場 / 場地」下拉選單 ===== */
 function refreshRacecourseSelect() {
@@ -551,8 +573,45 @@ function refreshSurfaceSelect() {
   });
 }
 
+function refreshToolRaceSelect() {
+  const sel = document.getElementById("toolRaceSelect");
+  if (!sel) return;
+
+  const current = sel.value;
+  sel.innerHTML = "";
+
+  const noRace = !state.races || state.races.length === 0;
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = noRace ? t("toolRaceEmpty") : t("toolRacePlaceholder");
+  sel.appendChild(placeholder);
+
+  if (noRace) {
+    sel.disabled = true;
+    return;
+  }
+
+  sel.disabled = false;
+  state.races.forEach(race => {
+    const opt = document.createElement("option");
+    opt.value = String(race.id);
+    const details = [];
+    if (race.date) details.push(race.date);
+    if (race.racecourse) details.push(racecourseLabel(race.racecourse));
+    if (race.raceNumber) details.push(`${race.raceNumber}R`);
+    const suffix = details.length > 0 ? ` (${details.join(" / ")})` : "";
+    opt.textContent = `${race.name}${suffix}`;
+    sel.appendChild(opt);
+  });
+
+  const exists = Array.from(sel.options).some(o => o.value === current);
+  if (exists) sel.value = current;
+}
+
 /* ===== BOX 展開 ===== */
 function expandBox() {
+  const raceId = requireToolRaceId();
+  if (!raceId) return;
   const raw = document.getElementById("boxNumbersInput").value;
   const mode = document.getElementById("boxModeSelect").value; // QUINELLA / TRIO / TRIFECTA
   const nums = (raw.match(/\d+/g) || []).map(s => String(parseInt(s,10)));
@@ -578,11 +637,11 @@ function expandBox() {
         combos.push([uniq[i], uniq[j]]);
       }
     }
-    combos.forEach(c => addOptionRow("QUINELLA", c.join("-")));
+    appendOptionsToRace(raceId, combos.map(c => ({ type: "QUINELLA", name: c.join("-") })));
     alert(
       (state.lang === "zh"
-        ? `已產生 ${combos.length} 組馬連 BOX 並加入下方馬券選項。`
-        : `Generated ${combos.length} Quinella BOX combinations and added as options.`)
+        ? `已產生 ${combos.length} 組馬連 BOX 並加入選定賽事。`
+        : `Generated ${combos.length} Quinella BOX combinations and added to the race.`)
     );
     return;
   }
@@ -603,11 +662,11 @@ function expandBox() {
         }
       }
     }
-    combos.forEach(c => addOptionRow("TRIO", c.join("-")));
+    appendOptionsToRace(raceId, combos.map(c => ({ type: "TRIO", name: c.join("-") })));
     alert(
       (state.lang === "zh"
-        ? `已產生 ${combos.length} 組三連複 BOX 並加入下方馬券選項。`
-        : `Generated ${combos.length} Trio BOX combinations and added as options.`)
+        ? `已產生 ${combos.length} 組三連複 BOX 並加入選定賽事。`
+        : `Generated ${combos.length} Trio BOX combinations and added to the race.`)
     );
     return;
   }
@@ -629,16 +688,18 @@ function expandBox() {
         }
       }
     }
-    perms.forEach(p => addOptionRow("TRIFECTA", p.join("-")));
+    appendOptionsToRace(raceId, perms.map(p => ({ type: "TRIFECTA", name: p.join("-") })));
     alert(
       (state.lang === "zh"
-        ? `已產生 ${perms.length} 組三連單 BOX（含所有排列）並加入下方馬券選項。`
-        : `Generated ${perms.length} Trifecta BOX permutations and added as options.`)
+        ? `已產生 ${perms.length} 組三連單 BOX（含所有排列）並加入選定賽事。`
+        : `Generated ${perms.length} Trifecta BOX permutations and added to the race.`)
     );
     return;
   }
 }
 function expandBanker() {
+  const raceId = requireToolRaceId();
+  if (!raceId) return;
   const mode = document.getElementById("bankerModeSelect").value; // QUINELLA / TRIO / TRIFECTA
   const axisRaw = document.getElementById("bankerAxisInput").value;
   const othersRaw = document.getElementById("bankerOthersInput").value;
@@ -666,7 +727,7 @@ function expandBanker() {
     uniqOthers.forEach(o => {
       tickets.push([axis, o]);
     });
-    tickets.forEach(t => addOptionRow("QUINELLA", t.join("-")));
+    appendOptionsToRace(raceId, tickets.map(t => ({ type: "QUINELLA", name: t.join("-") })));
   } else if (mode === "TRIO") {
     if (uniqOthers.length < 2) {
       alert(state.lang === "zh"
@@ -679,7 +740,7 @@ function expandBanker() {
         tickets.push([axis, uniqOthers[i], uniqOthers[j]]);
       }
     }
-    tickets.forEach(t => addOptionRow("TRIO", t.join("-")));
+    appendOptionsToRace(raceId, tickets.map(t => ({ type: "TRIO", name: t.join("-") })));
   } else if (mode === "TRIFECTA") {
     if (uniqOthers.length < 2) {
       alert(state.lang === "zh"
@@ -694,16 +755,18 @@ function expandBanker() {
         tickets.push([axis, uniqOthers[i], uniqOthers[j]]);
       }
     }
-    tickets.forEach(t => addOptionRow("TRIFECTA", t.join("-")));
+    appendOptionsToRace(raceId, tickets.map(t => ({ type: "TRIFECTA", name: t.join("-") })));
   }
 
   alert(
     (state.lang === "zh"
-      ? `已產生 ${tickets.length} 組 Banker 馬券並加入下方選項。`
-      : `Generated ${tickets.length} banker tickets and added as options.`)
+      ? `已產生 ${tickets.length} 組 Banker 馬券並加入選定賽事。`
+      : `Generated ${tickets.length} banker tickets and added to the race.`)
   );
 }
 function addBracketTicket() {
+  const raceId = requireToolRaceId();
+  if (!raceId) return;
   const raw = document.getElementById("bracketInput").value;
   const nums = (raw.match(/\d+/g) || []).map(n => parseInt(n,10)).filter(n => !isNaN(n));
   if (nums.length !== 2) {
@@ -720,11 +783,11 @@ function addBracketTicket() {
     return;
   }
   const name = `${a}-${b}`;
-  addOptionRow("BRACKET", name);
+  appendOptionsToRace(raceId, [{ type: "BRACKET", name }]);
   alert(
     (state.lang === "zh"
-      ? `已加入枠連馬券：${name}。`
-      : `Added bracket ticket: ${name}.`)
+      ? `已加入枠連馬券：${name}（已套用至選定賽事）。`
+      : `Added bracket ticket ${name} to the selected race.`)
   );
 }
 
@@ -742,20 +805,6 @@ function createRace() {
   const raceNumberStr = document.getElementById("raceNumberSelect").value;
   const raceNumberVal = raceNumberStr ? parseInt(raceNumberStr, 10) : null;
 
-  const rows = Array.from(document.querySelectorAll("#optionsContainer .option-row"));
-  if (rows.length === 0) { alert(t("noOptions")); return; }
-
-  const options = [];
-  for (const row of rows) {
-    const type = row.querySelector(".opt-type").value.trim();
-    const nameStr = row.querySelector(".opt-name").value.trim();
-    if (!type || !nameStr) {
-      alert(t("optionIncomplete"));
-      return;
-    }
-    options.push({ type, name: nameStr, odds: null });
-  }
-
   // 找看看是否已存在同一場賽事（名稱 + 日期 + 場地資訊完全一致）
   const existing = state.races.find(r =>
     r.name === name &&
@@ -772,7 +821,6 @@ function createRace() {
     existing.racecourse = racecourseCode;
     existing.surface = surfaceCode;
     existing.raceNumber = raceNumberVal;
-    existing.options.push(...options);
   } else {
     // 新增一場新賽事
     const race = {
@@ -785,7 +833,7 @@ function createRace() {
       runners,
       status: "open",
       finishOrder: null,
-      options
+      options: []
     };
     state.races.push(race);
   }
@@ -795,7 +843,6 @@ function createRace() {
   document.getElementById("racecourseSelect").value = "";
   document.getElementById("surfaceSelect").value = "";
   document.getElementById("raceNumberSelect").value = "";
-  document.getElementById("optionsContainer").innerHTML = "";
   document.getElementById("runnerCountInput").value = "12";
   saveState();
   renderAll();
@@ -1461,14 +1508,15 @@ function resetAll() {
 function renderAll() {
   updateStaticTexts();
   document.getElementById("pointsDisplay").textContent = state.points;
+  refreshToolRaceSelect();
   renderHitStats();
   renderRaceManagement();
   renderBetting();
   renderSettle();
   renderHistory();
   refreshBetTypeSelects();
-  refreshRacecourseSelect();  
-  refreshSurfaceSelect();     
+  refreshRacecourseSelect();
+  refreshSurfaceSelect();
 }
 
 /* ===== init ===== */
@@ -1483,9 +1531,6 @@ if (typeof document !== "undefined") {
   updateStaticTexts();
   if (typeof state.points !== "number" || isNaN(state.points)) {
     state.points = 1000;
-  }
-  if (document.getElementById("optionsContainer").children.length === 0) {
-    addOptionRow();
   }
   renderAll();
 
