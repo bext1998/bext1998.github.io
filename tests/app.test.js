@@ -1,7 +1,13 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { placePayPositions, isWinningBet } = require('../app');
+const {
+  placePayPositions,
+  isWinningBet,
+  validateBackupPayload,
+  prepareStateFromBackup,
+  BACKUP_VERSION
+} = require('../app');
 
 function bet(type, optionName) {
   return { type, optionName };
@@ -63,4 +69,32 @@ test('isWinningBet handles BRACKET (枠連) tickets', () => {
   const mixedFramesFinish = [1, 6, 7]; // frames: 1, 3
   assert.ok(isWinningBet(bet('BRACKET', '1-3'), mixedFramesFinish, 16));
   assert.ok(!isWinningBet(bet('BRACKET', '2-3'), mixedFramesFinish, 16));
+});
+
+test('validateBackupPayload rejects mismatched version', () => {
+  assert.throws(() => validateBackupPayload({
+    version: BACKUP_VERSION + 1,
+    points: 0,
+    races: [],
+    bets: []
+  }), /INVALID_VERSION/);
+});
+
+test('prepareStateFromBackup rebuilds points, races, bets and lastBetId', () => {
+  const backup = validateBackupPayload({
+    version: BACKUP_VERSION,
+    points: 2500,
+    races: [
+      { id: 7, name: 'Tokyo 11R', runners: 16, status: 'open', options: [] }
+    ],
+    bets: [
+      { id: 42, raceId: 7, type: 'WIN', optionName: '5', stake: 100, result: 'pending', winAmount: 0 }
+    ]
+  });
+  const { nextState, nextLastBetId } = prepareStateFromBackup({ lang: 'en', points: 10, races: [], bets: [] }, backup);
+  assert.strictEqual(nextState.points, 2500);
+  assert.strictEqual(nextState.races.length, 1);
+  assert.strictEqual(nextState.bets.length, 1);
+  assert.strictEqual(nextState.lang, 'en');
+  assert.strictEqual(nextLastBetId, 42);
 });

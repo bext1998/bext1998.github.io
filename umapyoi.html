@@ -244,6 +244,12 @@
 <div class="card">
   <div class="section-title"><h2 id="historyTitle">下注紀錄</h2></div>
   <div id="historyContainer"></div>
+  <div class="flex-row" style="margin-top:10px; gap:8px; flex-wrap:wrap;">
+    <button class="secondary" type="button" id="importBetsBtn">匯入下注資料</button>
+    <button class="secondary" type="button" id="exportBetsBtn">備份下注資料</button>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none">
+  </div>
+  <p class="small" id="importFeedback" style="display:none; margin-top:6px;"></p>
 </div>
 
 <!-- 系統操作 -->
