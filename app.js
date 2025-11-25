@@ -25,6 +25,16 @@ state = {
 ============================== */
 
 const STORAGE_KEY = "CG_Betting_V9";
+const BACKUP_VERSION = 1;
+const MAX_IMPORT_SIZE = 2 * 1024 * 1024; // 2MB safety cap
+
+class ImportError extends Error {
+  constructor(code) {
+    super(code);
+    this.name = "ImportError";
+    this.code = code;
+  }
+}
 
 const HOW_TO_BET_LINKS = {
   zh: "how_to_bet_en.pdf",
@@ -121,6 +131,16 @@ const I18N = {
     settleHint: "每個賽事請輸入實際前 3 著的賽馬背號 / PP（例如：13 6 7），系統會依券種自動判斷是否中獎並計算回收。",
     noSettleMsg: "目前沒有可結算的賽事。",
     historyTitle: "下注紀錄",
+    importBetsBtn: "匯入下注資料",
+    exportBetsBtn: "備份下注資料",
+    importSuccess: "匯入完成，資料已更新。",
+    importErrorEmpty: "檔案是空的，請選擇有效的匯出檔。",
+    importErrorInvalid: "檔案內容不是有效的 JSON。",
+    importErrorVersion: "版本不相容，請使用最新匯出檔。",
+    importErrorMissingFields: "缺少必要欄位（points / races / bets）。",
+    importErrorInvalidType: "匯入資料格式錯誤，請確認欄位型別。",
+    importErrorTooLarge: "檔案過大，請確認檔案是否正確。",
+    importErrorUnknown: "匯入失敗，請稍後再試。",
     systemTitle: "系統操作",
     resetBtn: "清空所有資料（不可復原）",
     resetHint: "會清除所有賽事、下注紀錄與點數。",
@@ -216,6 +236,16 @@ const I18N = {
     settleHint: "For each race, enter the actual top 3 finishers' horse numbers / PP (e.g. 13 6 7). The system will auto judge winners by bet type and calculate returns.",
     noSettleMsg: "No races to settle.",
     historyTitle: "Bet History",
+    importBetsBtn: "Import bets",
+    exportBetsBtn: "Backup bets",
+    importSuccess: "Import completed and data refreshed.",
+    importErrorEmpty: "The file is empty. Please select a valid backup.",
+    importErrorInvalid: "The file is not valid JSON.",
+    importErrorVersion: "Version mismatch. Please use a newer backup file.",
+    importErrorMissingFields: "Missing required fields: points / races / bets.",
+    importErrorInvalidType: "Backup data has invalid field types.",
+    importErrorTooLarge: "File is too large. Please check the backup file.",
+    importErrorUnknown: "Import failed. Please try again later.",
     systemTitle: "System",
     resetBtn: "Reset all data (irreversible)",
     resetHint: "This will clear all races, bets, and reset points to 1000.",
@@ -319,26 +349,206 @@ function loadState() {
     console.error("load error", e);
   }
 }
+
+/* ===== 匯出 / 匯入 ===== */
+const IMPORT_ERROR_MAP = {
+  EMPTY_FILE: "importErrorEmpty",
+  TOO_LARGE: "importErrorTooLarge",
+  INVALID_JSON: "importErrorInvalid",
+  INVALID_VERSION: "importErrorVersion",
+  MISSING_FIELDS: "importErrorMissingFields",
+  INVALID_TYPE: "importErrorInvalidType"
+};
+
+function validateOptionShape(opt) {
+  if (!opt || typeof opt !== "object") throw new ImportError("INVALID_TYPE");
+  if (typeof opt.type !== "string" || typeof opt.name !== "string") {
+    throw new ImportError("INVALID_TYPE");
+  }
+  return {
+    type: opt.type,
+    name: opt.name,
+    odds: typeof opt.odds === "number" && isFinite(opt.odds) ? opt.odds : null
+  };
+}
+
+function validateRaceShape(race) {
+  if (!race || typeof race !== "object") throw new ImportError("INVALID_TYPE");
+  if (typeof race.id !== "number" || isNaN(race.id)) throw new ImportError("INVALID_TYPE");
+  if (typeof race.name !== "string") throw new ImportError("INVALID_TYPE");
+  if (typeof race.runners !== "number" || isNaN(race.runners)) throw new ImportError("INVALID_TYPE");
+  const options = Array.isArray(race.options) ? race.options.map(validateOptionShape) : [];
+  return {
+    id: race.id,
+    name: race.name,
+    date: typeof race.date === "string" ? race.date : null,
+    racecourse: typeof race.racecourse === "string" ? race.racecourse : null,
+    surface: race.surface === "TURF" || race.surface === "DIRT" ? race.surface : null,
+    raceNumber: typeof race.raceNumber === "number" && !isNaN(race.raceNumber) ? race.raceNumber : null,
+    runners: race.runners,
+    status: race.status === "settled" ? "settled" : "open",
+    finishOrder: Array.isArray(race.finishOrder)
+      ? race.finishOrder.filter(n => Number.isInteger(n))
+      : null,
+    options
+  };
+}
+
+function validateBetShape(bet) {
+  if (!bet || typeof bet !== "object") throw new ImportError("INVALID_TYPE");
+  if (typeof bet.id !== "number" || isNaN(bet.id)) throw new ImportError("INVALID_TYPE");
+  if (typeof bet.raceId !== "number" || isNaN(bet.raceId)) throw new ImportError("INVALID_TYPE");
+  if (typeof bet.type !== "string" || typeof bet.optionName !== "string") {
+    throw new ImportError("INVALID_TYPE");
+  }
+  if (typeof bet.stake !== "number" || !Number.isFinite(bet.stake)) {
+    throw new ImportError("INVALID_TYPE");
+  }
+  return {
+    id: bet.id,
+    raceId: bet.raceId,
+    raceName: typeof bet.raceName === "string" ? bet.raceName : "",
+    raceDate: typeof bet.raceDate === "string" ? bet.raceDate : null,
+    racecourse: typeof bet.racecourse === "string" ? bet.racecourse : null,
+    surface: bet.surface === "TURF" || bet.surface === "DIRT" ? bet.surface : null,
+    raceNumber: typeof bet.raceNumber === "number" && !isNaN(bet.raceNumber) ? bet.raceNumber : null,
+    type: bet.type,
+    optionName: bet.optionName,
+    stake: bet.stake,
+    result: bet.result === "win" || bet.result === "lose" ? bet.result : "pending",
+    odds: typeof bet.odds === "number" && isFinite(bet.odds) ? bet.odds : null,
+    winAmount: typeof bet.winAmount === "number" && isFinite(bet.winAmount) ? bet.winAmount : 0
+  };
+}
+
+function validateBackupPayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    throw new ImportError("INVALID_JSON");
+  }
+  const { version, points, races, bets } = payload;
+  if (version !== BACKUP_VERSION) {
+    throw new ImportError("INVALID_VERSION");
+  }
+  if (typeof points !== "number" || Number.isNaN(points)) {
+    throw new ImportError("INVALID_TYPE");
+  }
+  if (!Array.isArray(races) || !Array.isArray(bets)) {
+    throw new ImportError("MISSING_FIELDS");
+  }
+  const sanitizedRaces = races.map(validateRaceShape);
+  const sanitizedBets = bets.map(validateBetShape);
+  return { version, points, races: sanitizedRaces, bets: sanitizedBets };
+}
+
+function prepareStateFromBackup(currentState, backup) {
+  const merged = normalizeSnapshot({
+    ...currentState,
+    points: backup.points,
+    races: backup.races,
+    bets: backup.bets
+  });
+  const nextLastBetId = Array.isArray(merged.bets) && merged.bets.length > 0
+    ? Math.max(...merged.bets.map(b => b.id || 0))
+    : 0;
+  return { nextState: merged, nextLastBetId };
+}
+
+function getImportErrorMessage(err) {
+  const key = err instanceof ImportError ? IMPORT_ERROR_MAP[err.code] : null;
+  if (key) return { key, message: t(key) };
+  return { key: null, message: t("importErrorUnknown") };
+}
+
+function showImportMessage(message, isError = false, key = "") {
+  const el = typeof document !== "undefined" ? document.getElementById("importFeedback") : null;
+  if (!el) {
+    if (isError) alert(message);
+    return;
+  }
+  el.textContent = message;
+  el.style.display = message ? "" : "none";
+  el.style.color = isError ? "#b00020" : "#0b7a0b";
+  if (key) {
+    el.dataset.key = key;
+  } else {
+    delete el.dataset.key;
+  }
+}
+
+function exportBackup() {
+  if (typeof document === "undefined") return;
+  const payload = {
+    version: BACKUP_VERSION,
+    points: state.points,
+    races: state.races,
+    bets: state.bets
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "cg-bets-backup.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function handleImportFile(file) {
+  if (typeof FileReader === "undefined") return;
+  if (!file) {
+    showImportMessage(t("importErrorEmpty"), true, "importErrorEmpty");
+    return;
+  }
+  if (file.size === 0) {
+    showImportMessage(t("importErrorEmpty"), true, "importErrorEmpty");
+    return;
+  }
+  if (file.size > MAX_IMPORT_SIZE) {
+    showImportMessage(t("importErrorTooLarge"), true, "importErrorTooLarge");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => {
+    showImportMessage(t("importErrorUnknown"), true, "importErrorUnknown");
+  };
+  reader.onload = () => {
+    try {
+      const text = reader.result;
+      if (!text) throw new ImportError("EMPTY_FILE");
+      const parsed = JSON.parse(text);
+      const validated = validateBackupPayload(parsed);
+      const { nextState, nextLastBetId } = prepareStateFromBackup(state, validated);
+      state = nextState;
+      lastBetId = nextLastBetId;
+      normalizeState();
+      saveState();
+      renderAll();
+      showImportMessage(t("importSuccess"), false, "importSuccess");
+    } catch (err) {
+      console.error("import failed", err);
+      const { key, message } = getImportErrorMessage(err);
+      showImportMessage(message, true, key || "importErrorUnknown");
+    }
+  };
+  reader.readAsText(file);
+}
+function normalizeSnapshot(snapshot) {
+  const result = snapshot && typeof snapshot === "object" ? { ...snapshot } : {};
+  if (result.lang !== "zh" && result.lang !== "en") {
+    result.lang = "zh";
+  }
+  if (typeof result.points !== "number" || isNaN(result.points)) {
+    result.points = 1000;
+  }
+  if (!Array.isArray(result.races)) {
+    result.races = [];
+  }
+  if (!Array.isArray(result.bets)) {
+    result.bets = [];
+  }
+  return result;
+}
 function normalizeState() {
-  if (!state || typeof state !== "object") {
-    state = {};
-  }
-
-  if (state.lang !== "zh" && state.lang !== "en") {
-    state.lang = "zh";
-  }
-
-  if (typeof state.points !== "number" || isNaN(state.points)) {
-    state.points = 1000;
-  }
-
-  if (!Array.isArray(state.races)) {
-    state.races = [];
-  }
-
-  if (!Array.isArray(state.bets)) {
-    state.bets = [];
-  }
+  state = normalizeSnapshot(state);
 }
 
 /* ===== UI 文案更新 ===== */
@@ -404,9 +614,17 @@ function updateStaticTexts() {
 
   // 下注紀錄 & 系統操作
   document.getElementById("historyTitle").textContent = t("historyTitle");
+  const importBtn = document.getElementById("importBetsBtn");
+  if (importBtn) importBtn.textContent = t("importBetsBtn");
+  const exportBtn = document.getElementById("exportBetsBtn");
+  if (exportBtn) exportBtn.textContent = t("exportBetsBtn");
   document.getElementById("systemTitle").textContent = t("systemTitle");
   document.getElementById("resetBtn").textContent = t("resetBtn");
   document.getElementById("resetHint").textContent = t("resetHint");
+  const importFeedback = document.getElementById("importFeedback");
+  if (importFeedback && importFeedback.dataset.key) {
+    importFeedback.textContent = t(importFeedback.dataset.key);
+  }
 
   // 語言切換 & PDF 按鈕
   document.getElementById("langToggle").textContent = t("langToggle");
@@ -1562,8 +1780,39 @@ if (typeof document !== "undefined") {
     saveState();
     renderAll();
   };
+
+  const exportBtn = document.getElementById("exportBetsBtn");
+  if (exportBtn) {
+    exportBtn.onclick = exportBackup;
+  }
+
+  const importBtn = document.getElementById("importBetsBtn");
+  if (importBtn) {
+    importBtn.onclick = () => {
+      const input = document.getElementById("importFileInput");
+      if (input) {
+        input.value = "";
+        input.click();
+      }
+    };
+  }
+
+  const importInput = document.getElementById("importFileInput");
+  if (importInput) {
+    importInput.onchange = (e) => {
+      const file = e.target.files && e.target.files[0];
+      handleImportFile(file);
+    };
+  }
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { placePayPositions, isWinningBet, parseNumbersFromName };
+  module.exports = {
+    placePayPositions,
+    isWinningBet,
+    parseNumbersFromName,
+    validateBackupPayload,
+    prepareStateFromBackup,
+    BACKUP_VERSION
+  };
 }
